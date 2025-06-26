@@ -32,6 +32,12 @@ export default function AddEmployeePage() {
     joiningDate: '',
     officeLocation: ''
   });
+  const [accountAccessFormData, setAccountAccessFormData] = useState({
+    emailAddress: '',
+    slackID: '',
+    skypeID: '',
+    githubID: ''
+  });
 
   const handlePersonalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -44,6 +50,14 @@ export default function AddEmployeePage() {
   const handleProfessionalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfessionalFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAccountAccessInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setAccountAccessFormData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -82,6 +96,7 @@ export default function AddEmployeePage() {
     console.log('Form submitted:', {
       personal: personalFormData,
       professional: professionalFormData,
+      accountAccess: accountAccessFormData,
       profileImage,
       documents: uploadedDocs.map((doc, i) => ({ title: ['Appointment Letter', 'Salary Slips', 'Relieving Letter', 'Experience Letter'][i], file: doc?.name })),
     });
@@ -157,7 +172,7 @@ export default function AddEmployeePage() {
                 </svg>
                 Documents
               </button>
-              <button className="flex items-center gap-2 px-1 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+              <button className={`flex items-center gap-2 px-1 py-4 text-sm font-medium ${activeTab === 'account' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('account')}>
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -234,10 +249,17 @@ export default function AddEmployeePage() {
                   </div>
                 </div>
               </div>
+            ) : activeTab === 'account' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><input type="email" name="emailAddress" value={accountAccessFormData.emailAddress} onChange={handleAccountAccessInputChange} placeholder="Enter Email Address" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required /></div>
+                <div><input type="text" name="slackID" value={accountAccessFormData.slackID} onChange={handleAccountAccessInputChange} placeholder="Enter Slack ID" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required /></div>
+                <div><input type="text" name="skypeID" value={accountAccessFormData.skypeID} onChange={handleAccountAccessInputChange} placeholder="Enter Skype ID" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required /></div>
+                <div><input type="text" name="githubID" value={accountAccessFormData.githubID} onChange={handleAccountAccessInputChange} placeholder="Enter Github ID" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required /></div>
+              </div>
             ) : null}
             <div className="flex justify-end gap-6 mt-12 pt-8 border-t border-gray-200">
               <button type="button" onClick={() => router.push('/employees')} className="px-8 py-3 text-lg border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Cancel</button>
-              <button type="submit" onClick={handleSubmit} className="px-8 py-3 text-lg bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">Next</button>
+              <button type="submit" onClick={handleSubmit} className="px-8 py-3 text-lg bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">Add</button>
             </div>
           </div>
         </div>

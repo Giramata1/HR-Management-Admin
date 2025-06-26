@@ -1,5 +1,6 @@
 'use client'
 
+
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -35,18 +36,33 @@ const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
 }
 
 const EmployeeTable = () => {
-  const [employees] = useState<Employee[]>([])
+  const [employees] = useState<Employee[]>([
+    { id: 1, name: "John Doe", employeeId: "EMP001", department: "Design", designation: "Designer", type: "Office", status: "Active", avatar: "https://via.placeholder.com/32" },
+    { id: 2, name: "Jane Smith", employeeId: "EMP002", department: "Java", designation: "Developer", type: "Work from Home", status: "Active", avatar: "https://via.placeholder.com/32" },
+    { id: 3, name: "Bob Johnson", employeeId: "EMP003", department: "Python", designation: "Developer", type: "Office", status: "Inactive", avatar: "https://via.placeholder.com/32" },
+    // Add more dummy data as needed
+  ])
   const [globalSearch, setGlobalSearch] = useState('')
   const [tableSearch, setTableSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [filters, setFilters] = useState({
+    departments: [] as string[],
+    type: ''
+  })
   const router = useRouter()
+
+  const departments = ["Design", "Java", "Python", "React JS", "HR", "Sales", "Business Analyst", "Project Manager", "Account", "Node JS"]
+  const types = ["Office", "Work from Home"]
 
   const filteredEmployees = employees.filter((emp) =>
     emp.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
     emp.employeeId.includes(tableSearch) ||
     emp.department.toLowerCase().includes(tableSearch.toLowerCase()) ||
-    emp.designation.toLowerCase().includes(tableSearch.toLowerCase())
+    emp.designation.toLowerCase().includes(tableSearch.toLowerCase()) &&
+    (filters.departments.length === 0 || filters.departments.includes(emp.department)) &&
+    (filters.type === '' || filters.type === emp.type)
   )
 
   const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage)
@@ -54,7 +70,31 @@ const EmployeeTable = () => {
   const currentEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage)
 
   const handleNavigateToAddPage = () => {
-    router.push('/employees/add') // ✅ Updated route
+    router.push('/employees/add')
+  }
+
+  const handleFilterToggle = () => {
+    setIsFilterOpen(!isFilterOpen)
+  }
+
+  const handleFilterChange = (type: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [type]: type === 'departments' 
+        ? prev.departments.includes(value)
+          ? prev.departments.filter(d => d !== value)
+          : [...prev.departments, value]
+        : value
+    }))
+  }
+
+  const handleApplyFilters = () => {
+    setIsFilterOpen(false)
+  }
+
+  const handleCancelFilters = () => {
+    setFilters({ departments: [], type: '' })
+    setIsFilterOpen(false)
   }
 
   return (
@@ -122,12 +162,74 @@ const EmployeeTable = () => {
               <span>Add New Employee</span>
             </button>
 
-            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+            <button
+              onClick={handleFilterToggle}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span>Filter</span>
             </button>
+
+            {isFilterOpen && (
+              <div className="absolute top-16 right-6 bg-white shadow-lg rounded-lg p-4 z-10 w-64">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Filter</h3>
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Search Employee"
+                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                    />
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-medium text-gray-700">Department</h4>
+                      {departments.map((dept) => (
+                        <label key={dept} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={filters.departments.includes(dept)}
+                            onChange={() => handleFilterChange('departments', dept)}
+                            className="rounded text-purple-600 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-600">{dept}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Select Type</h4>
+                    {types.map((type) => (
+                      <label key={type} className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="type"
+                          value={type}
+                          checked={filters.type === type}
+                          onChange={() => handleFilterChange('type', type)}
+                          className="rounded text-purple-600 focus:ring-purple-500"
+                        />
+                        <span className="text-sm text-gray-600">{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      onClick={handleCancelFilters}
+                      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleApplyFilters}
+                      className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
