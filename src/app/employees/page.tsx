@@ -1,10 +1,10 @@
 'use client'
 
-
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Eye, Edit2, Trash2, Bell } from 'lucide-react'
+import { Search, Plus, Eye, Edit2, Trash2, Bell, Filter } from 'lucide-react'
+import EmployeeProfile from '@/components/EmployeeProfile' 
 
 type Employee = {
   id: number
@@ -15,6 +15,18 @@ type Employee = {
   type: string
   status: string
   avatar: string
+  personalInfo: {
+    dateOfBirth: string
+    gender: string
+    address: string
+    city: string
+    zipCode: string
+    country: string
+    maritalStatus: string
+    nationality: string
+    email: string
+    phone: string
+  }
 }
 
 const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
@@ -37,10 +49,139 @@ const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
 
 const EmployeeTable = () => {
   const [employees] = useState<Employee[]>([
-    { id: 1, name: "John Doe", employeeId: "EMP001", department: "Design", designation: "Designer", type: "Office", status: "Active", avatar: "https://via.placeholder.com/32" },
-    { id: 2, name: "Jane Smith", employeeId: "EMP002", department: "Java", designation: "Developer", type: "Work from Home", status: "Active", avatar: "https://via.placeholder.com/32" },
-    { id: 3, name: "Bob Johnson", employeeId: "EMP003", department: "Python", designation: "Developer", type: "Office", status: "Inactive", avatar: "https://via.placeholder.com/32" },
-    // Add more dummy data as needed
+    {
+      id: 1,
+      name: "John Doe",
+      employeeId: "EMP001",
+      department: "Design",
+      designation: "Designer",
+      type: "Office",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Jul 15, 1990",
+        gender: "Male",
+        address: "1234 Royal Ln",
+        city: "New York",
+        zipCode: "10001",
+        country: "United States",
+        maritalStatus: "Married",
+        nationality: "American",
+        email: "john.doe@example.com",
+        phone: "(123) 456-7890",
+      },
+    },
+    {
+      id: 2,
+      name: "Jane Smith",
+      employeeId: "EMP002",
+      department: "Java",
+      designation: "Developer",
+      type: "Work from Home",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Aug 20, 1985",
+        gender: "Female",
+        address: "5678 Park Ave",
+        city: "Los Angeles",
+        zipCode: "90001",
+        country: "United States",
+        maritalStatus: "Single",
+        nationality: "American",
+        email: "jane.smith@example.com",
+        phone: "(234) 567-8901",
+      },
+    },
+    // Add similar data for other employees
+    {
+      id: 3,
+      name: "Bob Johnson",
+      employeeId: "EMP003",
+      department: "Python",
+      designation: "Developer",
+      type: "Office",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Sep 10, 1988",
+        gender: "Male",
+        address: "9012 Hill St",
+        city: "Chicago",
+        zipCode: "60601",
+        country: "United States",
+        maritalStatus: "Married",
+        nationality: "American",
+        email: "bob.johnson@example.com",
+        phone: "(345) 678-9012",
+      },
+    },
+    {
+      id: 4,
+      name: "Alice Brown",
+      employeeId: "EMP004",
+      department: "React JS",
+      designation: "Frontend Developer",
+      type: "Work from Home",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Oct 15, 1992",
+        gender: "Female",
+        address: "3456 Oak Rd",
+        city: "Seattle",
+        zipCode: "98101",
+        country: "United States",
+        maritalStatus: "Single",
+        nationality: "American",
+        email: "alice.brown@example.com",
+        phone: "(456) 789-0123",
+      },
+    },
+    {
+      id: 5,
+      name: "Charlie Wilson",
+      employeeId: "EMP005",
+      department: "HR",
+      designation: "HR Manager",
+      type: "Office",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Nov 20, 1987",
+        gender: "Male",
+        address: "7890 Pine St",
+        city: "Houston",
+        zipCode: "77001",
+        country: "United States",
+        maritalStatus: "Married",
+        nationality: "American",
+        email: "charlie.wilson@example.com",
+        phone: "(567) 890-1234",
+      },
+    },
+    {
+      id: 6,
+      name: "Diana Miller",
+      employeeId: "EMP006",
+      department: "Sales",
+      designation: "Sales Executive",
+      type: "Office",
+      status: "Permanent",
+      avatar: "https://via.placeholder.com/32",
+      personalInfo: {
+        dateOfBirth: "Dec 25, 1991",
+        gender: "Female",
+        address: "2468 Maple Dr",
+        city: "Miami",
+        zipCode: "33101",
+        country: "United States",
+        maritalStatus: "Single",
+        nationality: "American",
+        email: "diana.miller@example.com",
+        phone: "(678) 901-2345",
+      },
+    },
   ])
   const [globalSearch, setGlobalSearch] = useState('')
   const [tableSearch, setTableSearch] = useState('')
@@ -49,8 +190,10 @@ const EmployeeTable = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState({
     departments: [] as string[],
-    type: ''
+    type: '',
   })
+  const [searchEmployee, setSearchEmployee] = useState('')
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const router = useRouter()
 
   const departments = ["Design", "Java", "Python", "React JS", "HR", "Sales", "Business Analyst", "Project Manager", "Account", "Node JS"]
@@ -73,18 +216,23 @@ const EmployeeTable = () => {
     router.push('/employees/add')
   }
 
+  const handleViewProfile = (employee: Employee) => {
+    setSelectedEmployee(employee)
+    // For simplicity, we'll render the profile here; in a real app, use router.push(`/employees/${employee.id}`)
+  }
+
   const handleFilterToggle = () => {
     setIsFilterOpen(!isFilterOpen)
   }
 
   const handleFilterChange = (type: string, value: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [type]: type === 'departments' 
+      [type]: type === 'departments'
         ? prev.departments.includes(value)
-          ? prev.departments.filter(d => d !== value)
+          ? prev.departments.filter((d) => d !== value)
           : [...prev.departments, value]
-        : value
+        : value,
     }))
   }
 
@@ -94,12 +242,21 @@ const EmployeeTable = () => {
 
   const handleCancelFilters = () => {
     setFilters({ departments: [], type: '' })
+    setSearchEmployee('')
     setIsFilterOpen(false)
+  }
+
+  const filteredDepartments = departments.filter((dept) =>
+    dept.toLowerCase().includes(searchEmployee.toLowerCase())
+  )
+
+  if (selectedEmployee) {
+    return <EmployeeProfile employee={selectedEmployee} />
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 space-y-6">
-      {/* 🔷 HEADER SECTION */}
+      {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">All Employees</h1>
@@ -138,9 +295,9 @@ const EmployeeTable = () => {
         </div>
       </div>
 
-      {/* 🟩 TABLE SECTION */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        {/* Controls */}
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6 relative">
+        {/* Search and Actions */}
         <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
           <div className="relative w-64">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
@@ -166,113 +323,142 @@ const EmployeeTable = () => {
               onClick={handleFilterToggle}
               className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
+              <Filter className="w-4 h-4" />
               <span>Filter</span>
             </button>
+          </div>
+        </div>
 
-            {isFilterOpen && (
-              <div className="absolute top-16 right-6 bg-white shadow-lg rounded-lg p-4 z-10 w-64">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Filter</h3>
-                <div className="space-y-4">
-                  <div>
+        {/* Filter Modal */}
+        {isFilterOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-40"
+              onClick={handleFilterToggle}
+            />
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 w-80 max-h-[80vh] overflow-y-auto border border-gray-200">
+                <div className="flex items-center justify-center mb-6 relative">
+                  <h3 className="text-lg font-medium text-gray-900">Filter</h3>
+                </div>
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search Employee"
-                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      value={searchEmployee}
+                      onChange={(e) => setSearchEmployee(e.target.value)}
                     />
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-medium text-gray-700">Department</h4>
-                      {departments.map((dept) => (
-                        <label key={dept} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={filters.departments.includes(dept)}
-                            onChange={() => handleFilterChange('departments', dept)}
-                            className="rounded text-purple-600 focus:ring-purple-500"
-                          />
-                          <span className="text-sm text-gray-600">{dept}</span>
-                        </label>
-                      ))}
-                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700">Select Type</h4>
+                </div>
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-4">Department</h4>
+                  <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto">
+                    {filteredDepartments.map((dept) => (
+                      <label key={dept} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.departments.includes(dept)}
+                          onChange={() => handleFilterChange('departments', dept)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{dept}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-8">
+                  <h4 className="text-sm font-medium text-gray-900 mb-4">Select Type</h4>
+                  <div className="flex gap-6">
                     {types.map((type) => (
-                      <label key={type} className="flex items-center space-x-2">
+                      <label key={type} className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="radio"
                           name="type"
                           value={type}
                           checked={filters.type === type}
                           onChange={() => handleFilterChange('type', type)}
-                          className="rounded text-purple-600 focus:ring-purple-500"
+                          className="w-4 h-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-600">{type}</span>
+                        <span className="text-sm text-gray-700">{type}</span>
                       </label>
                     ))}
                   </div>
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button
-                      onClick={handleCancelFilters}
-                      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleApplyFilters}
-                      className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                    >
-                      Apply
-                    </button>
-                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleCancelFilters}
+                    className="px-5 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleApplyFilters}
+                    className="px-5 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-gray-100 text-gray-600 text-sm">
+              <tr className="bg-gray-50 border-y border-gray-200">
                 {['Name', 'ID', 'Department', 'Designation', 'Type', 'Status', 'Actions'].map((header) => (
-                  <th key={header} className="px-6 py-3 text-left font-medium">{header}</th>
+                  <th key={header} className="px-6 py-3 text-left font-medium text-gray-700 text-sm">{header}</th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200">
               {currentEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-6 text-sm text-gray-500">
+                  <td colSpan={7} className="text-center py-8 text-sm text-gray-500">
                     No employees found. Click &quot;Add New Employee&quot;.
                   </td>
                 </tr>
               ) : (
                 currentEmployees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-gray-50 border-b">
+                  <tr key={emp.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
                         <EmployeeAvatar src={emp.avatar} name={emp.name} />
                         <span className="text-sm font-medium text-gray-900">{emp.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{emp.employeeId}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{emp.department}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{emp.designation}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{emp.type}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{emp.employeeId}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{emp.department}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{emp.designation}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{emp.type}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
+                          emp.status === 'Permanent' ? 'bg-blue-100 text-blue-500' : ''
+                        }`}
+                      >
                         {emp.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex space-x-2">
-                        <button><Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" /></button>
-                        <button><Edit2 className="w-4 h-4 text-gray-400 hover:text-gray-600" /></button>
-                        <button><Trash2 className="w-4 h-4 text-gray-400 hover:text-gray-600" /></button>
+                        <button
+                          className="p-1 hover:bg-gray-100 rounded"
+                          onClick={() => handleViewProfile(emp)}
+                        >
+                          <Eye className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Edit2 className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-100 rounded">
+                          <Trash2 className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -283,7 +469,7 @@ const EmployeeTable = () => {
         </div>
 
         {/* Pagination */}
-        <div className="mt-4 flex justify-between items-center">
+        <div className="mt-6 flex justify-between items-center">
           <div className="text-sm text-gray-600">
             Showing {Math.min(filteredEmployees.length, itemsPerPage)} of {filteredEmployees.length} results
           </div>
@@ -291,27 +477,27 @@ const EmployeeTable = () => {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               ←
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .slice(0, 5)
-              .map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-1 text-sm rounded ${
-                    currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-gray-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-2 text-sm rounded-lg ${
+                  currentPage === page
+                    ? 'bg-purple-600 text-white'
+                    : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
             <button
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               →
             </button>
