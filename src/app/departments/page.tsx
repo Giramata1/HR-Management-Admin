@@ -1,51 +1,30 @@
+// ✅ File: src/app/departments/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { Search, Bell, ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-const Input = ({
-  className,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) => (
+const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) => (
   <input
     className={`py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 ${className || ''}`}
     {...props}
   />
 );
 
-const Button = ({
-  className,
-  children,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) => (
-  <button
-    className={`px-3 py-2 rounded-md border text-sm ${className || ''}`}
-    {...props}
-  >
+const Button = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) => (
+  <button className={`px-3 py-2 rounded-md border text-sm ${className || ''}`} {...props}>
     {children}
   </button>
 );
 
-const Avatar = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
+const Avatar = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={`rounded-full bg-gray-100 text-gray-600 font-semibold flex items-center justify-center ${className || ''}`}>
     {children}
   </div>
 );
 
-const AvatarFallback = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
+const AvatarFallback = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <div className={`w-full h-full flex items-center justify-center ${className || ''}`}>
     {children}
   </div>
@@ -54,7 +33,7 @@ const AvatarFallback = ({
 interface Employee {
   name: string;
   title: string;
-  avatar: string; 
+  avatar: string;
 }
 
 interface Departments {
