@@ -1,3 +1,4 @@
+// Sidebar component (unchanged)
 'use client';
 
 import Link from 'next/link';
@@ -53,15 +54,10 @@ const Sidebar = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-    console.log('Dark mode updated to:', isDarkMode, 'Class list:', document.documentElement.classList); // Debug
   }, [isDarkMode]);
 
   const handleMenuClick = () => {
-    setIsDarkMode(prev => {
-      const newMode = !prev;
-      console.log('Toggling dark mode to:', newMode); // Debug
-      return newMode;
-    });
+    setIsDarkMode(prev => !prev); // Toggle dark mode on each menu click
   };
 
   return (
