@@ -119,7 +119,11 @@ const DepartmentDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+<<<<<<< HEAD
       
+=======
+     
+>>>>>>> b7f380b0a5a201b025fdd3e37de15b934fb42c37
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
@@ -158,7 +162,11 @@ const DepartmentDetail = () => {
         </div>
       </div>
 
+<<<<<<< HEAD
       
+=======
+     
+>>>>>>> b7f380b0a5a201b025fdd3e37de15b934fb42c37
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <div className="relative">
@@ -213,7 +221,10 @@ const DepartmentDetail = () => {
           </div>
         </div>
 
+<<<<<<< HEAD
         
+=======
+>>>>>>> b7f380b0a5a201b025fdd3e37de15b934fb42c37
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -256,7 +267,11 @@ const DepartmentDetail = () => {
           </table>
         </div>
 
+<<<<<<< HEAD
         
+=======
+       
+>>>>>>> b7f380b0a5a201b025fdd3e37de15b934fb42c37
         <div className="flex items-center justify-between mt-6">
           <span className="text-sm text-gray-700">
             Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredEmployees.length)} of {filteredEmployees.length}
