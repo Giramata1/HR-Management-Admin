@@ -27,7 +27,6 @@ type Props = {
   onNext: () => void;
 };
 
-
 const defaultFormData = {
   firstName: '',
   lastName: '',
@@ -53,30 +52,24 @@ export default function PersonalForm({
   onCancel,
   onNext,
 }: Props) {
- 
   const formData = personalFormData || defaultFormData;
-  
-  
-  const safeHandleInputChange = handleInputChange || ((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    console.warn('handleInputChange function not provided to PersonalForm. Field:', e.target.name, 'Value:', e.target.value);
-  });
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
-      
+    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Add New Employee</h1>
-        <div className="flex items-center text-sm text-gray-500">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Add New Employee</h1>
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
           <span>All Employee</span>
           <ChevronRight className="w-4 h-4 mx-2" />
           <span>Add New Employee</span>
         </div>
       </div>
 
-      
+      {/* Profile Image Upload */}
       <div className="mb-8">
         <div
-          className="w-24 h-24 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+          className="w-24 h-24 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
           onClick={triggerFileInput}
         >
           {profileImage ? (
@@ -88,7 +81,7 @@ export default function PersonalForm({
               height={96}
             />
           ) : (
-            <User className="h-8 w-8 text-gray-400" />
+            <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           )}
         </div>
         <input
@@ -100,175 +93,86 @@ export default function PersonalForm({
         />
       </div>
 
-      
+      {/* Form Inputs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div>
+        {[
+          { name: 'firstName', placeholder: 'First Name' },
+          { name: 'lastName', placeholder: 'Last Name' },
+          { name: 'mobileNumber', placeholder: 'Mobile Number' },
+          { name: 'emailAddress', placeholder: 'Email Address', type: 'email' },
+        ].map(({ name, placeholder, type = 'text' }) => (
           <input
-            type="text"
-            name="firstName"
-            value={formData.firstName}
-            onChange={safeHandleInputChange}
-            placeholder="First Name"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+            key={name}
+            type={type}
+            name={name}
+            value={formData[name as keyof typeof formData]}
+            onChange={handleInputChange}
+            placeholder={placeholder}
+            className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-        </div>
-        
-        <div>
-          <input
-            type="text"
-            name="lastName"
-            value={formData.lastName}
-            onChange={safeHandleInputChange}
-            placeholder="Last Name"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          />
-        </div>
+        ))}
 
-        <div>
-          <input
-            type="text"
-            name="mobileNumber"
-            value={formData.mobileNumber}
-            onChange={safeHandleInputChange}
-            placeholder="Mobile Number"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          />
-        </div>
-
-        <div>
-          <input
-            type="email"
-            name="emailAddress"
-            value={formData.emailAddress}
-            onChange={safeHandleInputChange}
-            placeholder="Email Address"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          />
-        </div>
-
+        {/* Date of Birth */}
         <div className="relative">
           <input
             type="date"
             name="dateOfBirth"
             value={formData.dateOfBirth}
-            onChange={safeHandleInputChange}
+            onChange={handleInputChange}
             placeholder="Date of Birth"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+            className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          <Calendar className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
+          <Calendar className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
         </div>
 
-        <div className="relative">
-          <select
-            name="maritalStatus"
-            value={formData.maritalStatus}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">Marital Status</option>
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
-        </div>
+        {/* Dropdowns */}
+        {[
+          { name: 'maritalStatus', options: ['Single', 'Married'] },
+          { name: 'gender', options: ['Male', 'Female'] },
+          { name: 'nationality', options: ['Rwandan', 'Kenyan', 'Ugandan'] },
+          { name: 'city', options: ['Kigali', 'Musanze'] },
+          { name: 'state', options: ['Kigali City', 'Northern Province', 'Southern Province', 'Eastern Province', 'Western Province'] },
+          { name: 'zipCode', options: ['00000', '10001', '10002'] },
+        ].map(({ name, options }) => (
+          <div className="relative" key={name}>
+            <select
+              name={name}
+              value={formData[name as keyof typeof formData]}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>{name.replace(/([A-Z])/g, ' $1')}</option>
+              {options.map((opt) => (
+                <option key={opt.toLowerCase()} value={opt.toLowerCase()}>{opt}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+        ))}
 
-        <div className="relative">
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select
-            name="nationality"
-            value={formData.nationality}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">Nationality</option>
-            <option value="rwandan">Rwandan</option>
-            <option value="kenyan">Kenyan</option>
-            <option value="ugandan">Ugandan</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
-        </div>
-
+        {/* Address (Full Width) */}
         <div className="md:col-span-2">
           <input
             type="text"
             name="address"
             value={formData.address}
-            onChange={safeHandleInputChange}
+            onChange={handleInputChange}
             placeholder="Address"
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+            className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-        </div>
-
-        <div className="relative">
-          <select
-            name="city"
-            value={formData.city}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">City</option>
-            <option value="kigali">Kigali</option>
-            <option value="musanze">Musanze</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select
-            name="state"
-            value={formData.state}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">State</option>
-            <option value="kigali-city">Kigali City</option>
-            <option value="northern">Northern Province</option>
-            <option value="southern">Southern Province</option>
-            <option value="eastern">Eastern Province</option>
-            <option value="western">Western Province</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={safeHandleInputChange}
-            className="w-full px-4 py-4 bg-gray-50 border-0 rounded-lg appearance-none text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-          >
-            <option value="" className="text-gray-400">ZIP Code</option>
-            <option value="00000">00000</option>
-            <option value="10001">10001</option>
-            <option value="10002">10002</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
-      
-      <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+      {/* Buttons */}
+      <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
-          onClick={onCancel || (() => console.warn('onCancel function not provided'))}
-          className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          onClick={onCancel}
+          className="px-6 py-3 text-gray-700 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           Cancel
         </button>
         <button
-          onClick={onNext || (() => console.warn('onNext function not provided'))}
+          onClick={onNext}
           className="px-6 py-3 text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           Next

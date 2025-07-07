@@ -24,26 +24,28 @@ export default function DocumentUpload({
         {docTitles.map((title, index) => (
           <div
             key={index}
-            className="border-2 border-dashed border-purple-300 rounded-md p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-purple-50 transition"
+            className="border-2 border-dashed border-purple-300 dark:border-purple-600 rounded-md p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-gray-700 transition"
             onClick={() => triggerDocInput(index)}
           >
-            <span className="text-sm font-medium text-gray-800 mb-3">{title}</span>
-            <UploadCloud className="w-6 h-6 text-purple-600 mb-2" />
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-3">{title}</span>
+            <UploadCloud className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-2" />
             {uploadedDocs[index] ? (
-              <span className="text-sm text-gray-700 truncate max-w-[180px]">{uploadedDocs[index].name}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[180px]">
+                {uploadedDocs[index]?.name}
+              </span>
             ) : (
-              <>
-                <p className="text-sm text-gray-500">
-                  Drag & Drop or <span className="text-purple-600 underline">choose file</span> to upload
-                </p>
-              </>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Drag & Drop or <span className="text-purple-600 dark:text-purple-400 underline">choose file</span> to upload
+              </p>
             )}
-            <p className="text-[10px] text-gray-400 mt-1">Supported formats: .jpeg, .pdf</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              Supported formats: .jpeg, .pdf
+            </p>
           </div>
         ))}
       </div>
 
-      
+      {/* Hidden File Inputs */}
       {docTitles.map((_, index) => (
         <input
           key={`input-${index}`}
@@ -54,9 +56,6 @@ export default function DocumentUpload({
           className="hidden"
         />
       ))}
-
-     
-     
     </div>
   );
 }

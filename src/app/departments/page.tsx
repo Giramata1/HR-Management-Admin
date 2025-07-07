@@ -1,4 +1,4 @@
-// ✅ File: src/app/departments/page.tsx
+
 'use client';
 
 import { useState } from 'react';

@@ -18,7 +18,7 @@ const steps = [
 
 function renderNavigationTabs(currentStep: string, setCurrentStep: (step: string) => void) {
   return (
-    <div className="flex border-b border-gray-200 mb-8">
+    <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8 overflow-x-auto">
       {steps.map((step, index) => {
         const stepKey =
           index === 0 ? 'personal' :
@@ -32,17 +32,17 @@ function renderNavigationTabs(currentStep: string, setCurrentStep: (step: string
           <button
             key={step.label}
             onClick={() => setCurrentStep(stepKey)}
-            className={`flex items-center px-4 py-3 ${
+            className={`flex items-center px-4 py-3 whitespace-nowrap ${
               isActive
-                ? 'text-purple-600 border-b-2 border-purple-600 font-medium'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-purple-600 border-b-2 border-purple-600 font-medium dark:text-purple-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white'
             }`}
             type="button"
           >
             {step.icon}
             {step.label}
             {index < steps.length - 1 && (
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
+              <ChevronRight className="w-4 h-4 mx-2 text-gray-400 dark:text-gray-500" />
             )}
           </button>
         );
@@ -222,7 +222,7 @@ export default function AddEmployeePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
+    <div className=" p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Header />
       {renderNavigationTabs(currentStep, setCurrentStep)}
 
@@ -263,7 +263,7 @@ export default function AddEmployeePage() {
           <div className="flex justify-end gap-4 mt-6">
             <button
               onClick={handleDocumentsCancel}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               Cancel
             </button>

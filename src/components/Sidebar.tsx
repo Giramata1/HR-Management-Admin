@@ -35,19 +35,16 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark');
     } else {
-     
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setIsDarkMode(prefersDark);
     }
   }, []);
 
-  
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -56,16 +53,21 @@ const Sidebar = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+    console.log('Dark mode updated to:', isDarkMode, 'Class list:', document.documentElement.classList); // Debug
   }, [isDarkMode]);
 
+  const handleMenuClick = () => {
+    setIsDarkMode(prev => {
+      const newMode = !prev;
+      console.log('Toggling dark mode to:', newMode); // Debug
+      return newMode;
+    });
+  };
 
   return (
     <aside className={`w-64 h-screen border-r flex flex-col transition-colors duration-200 ${
-      isDarkMode 
-        ? 'bg-gray-900 border-gray-700' 
-        : 'bg-gray-50 border-gray-200'
+      isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
     }`}>
-      
       <div className={`p-6 border-b transition-colors duration-200 ${
         isDarkMode ? 'border-gray-700' : 'border-gray-200'
       }`}>
@@ -81,7 +83,6 @@ const Sidebar = () => {
         </div>
       </div>
 
-      
       <nav className="flex-1 p-4">
         <ul className="space-y-1">
           {menuItems.map((item, index) => {
@@ -89,7 +90,7 @@ const Sidebar = () => {
 
             return (
               <li key={index}>
-                <Link href={item.href}>
+                <Link href={item.href} onClick={handleMenuClick}>
                   <div
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                       isActive
@@ -109,7 +110,6 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-      
       <div className={`p-4 border-t transition-colors duration-200 ${
         isDarkMode ? 'border-gray-700' : 'border-gray-200'
       }`}>
