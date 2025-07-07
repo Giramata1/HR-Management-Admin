@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, MoreVertical } from 'lucide-react'
 import {
   addMonths,
@@ -21,7 +21,7 @@ interface ScheduleItem {
   task: string
 }
 
-// Example schedule data keyed by ISO date string (yyyy-MM-dd)
+
 const scheduleData: Record<string, ScheduleItem[]> = {
   '2023-07-06': [
     { time: '09:30', role: 'UI/UX Designer', task: 'Practical Task Review' },
@@ -37,6 +37,43 @@ const scheduleData: Record<string, ScheduleItem[]> = {
 export default function ScheduleCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date(2023, 6)) // July 2023
   const [selectedDate, setSelectedDate] = useState(new Date(2023, 6, 6))
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const savedTheme = localStorage.getItem('theme')
+      const documentHasDarkClass = document.documentElement.classList.contains('dark')
+      setIsDarkMode(savedTheme === 'dark' || documentHasDarkClass)
+    }
+
+   
+    checkTheme()
+
+    
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+
+   
+    interface StorageEventWithKey extends StorageEvent {
+      key: string | null;
+    }
+
+    const handleStorageChange = (e: StorageEventWithKey) => {
+      if (e.key === 'theme') {
+        checkTheme()
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
@@ -64,11 +101,21 @@ export default function ScheduleCalendar() {
   const scheduledDates = getScheduledDates()
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm max-w-md mx-auto overflow-hidden">
+    <div className={`rounded-2xl shadow-sm max-w-md mx-auto overflow-hidden transition-colors duration-200 ${
+      isDarkMode ? 'bg-gray-800' : 'bg-white'
+    }`}>
       <div className="flex justify-between items-center p-8 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">My Schedule</h2>
-        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-          <Calendar className="w-6 h-6 text-purple-600" />
+        <h2 className={`text-2xl font-bold transition-colors duration-200 ${
+          isDarkMode ? 'text-white' : 'text-gray-900'
+        }`}>
+          My Schedule
+        </h2>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-200 ${
+          isDarkMode ? 'bg-purple-900/20' : 'bg-purple-100'
+        }`}>
+          <Calendar className={`w-6 h-6 transition-colors duration-200 ${
+            isDarkMode ? 'text-purple-400' : 'text-purple-600'
+          }`} />
         </div>
       </div>
 
@@ -76,16 +123,18 @@ export default function ScheduleCalendar() {
         <div className="flex justify-between items-center">
           <button
             onClick={handlePrevMonth}
-            className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700"
+            className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors duration-200"
           >
             ←
           </button>
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className={`text-xl font-semibold transition-colors duration-200 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
             {format(currentMonth, 'MMMM, yyyy')}
           </h3>
           <button
             onClick={handleNextMonth}
-            className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700"
+            className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors duration-200"
           >
             →
           </button>
@@ -94,7 +143,9 @@ export default function ScheduleCalendar() {
 
       <div className="grid grid-cols-7 gap-2 px-8 mb-4">
         {dayHeaders.map((day) => (
-          <div key={day} className="text-center text-base font-medium text-gray-500 py-3">
+          <div key={day} className={`text-center text-base font-medium py-3 transition-colors duration-200 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             {day}
           </div>
         ))}
@@ -110,14 +161,20 @@ export default function ScheduleCalendar() {
             <button
               key={day.toString()}
               onClick={() => setSelectedDate(day)}
-              className={`aspect-square flex items-center justify-center text-lg rounded-xl cursor-pointer transition-colors
+              className={`aspect-square flex items-center justify-center text-lg rounded-xl cursor-pointer transition-colors duration-200
                 ${
                   isSelected
                     ? 'bg-purple-600 text-white'
                     : isScheduled && isCurrentMonth
-                    ? 'bg-purple-100 text-purple-600'
+                    ? isDarkMode
+                      ? 'bg-purple-900/20 text-purple-400'
+                      : 'bg-purple-100 text-purple-600'
                     : isCurrentMonth
-                    ? 'hover:bg-gray-100 text-gray-900'
+                    ? isDarkMode
+                      ? 'hover:bg-gray-700 text-gray-200'
+                      : 'hover:bg-gray-100 text-gray-900'
+                    : isDarkMode
+                    ? 'text-gray-600'
                     : 'text-gray-300'
                 }
               `}
@@ -136,26 +193,42 @@ export default function ScheduleCalendar() {
           return (
             <div key={dateKey} className="mb-8 last:mb-0">
               <div className="flex justify-between items-center mb-4">
-                <div className="text-base font-medium text-gray-900">
+                <div className={`text-base font-medium transition-colors duration-200 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                }`}>
                   {format(scheduleDate, 'EEEE, dd MMMM yyyy')}
                 </div>
-                <MoreVertical className="w-5 h-5 text-gray-400" />
+                <MoreVertical className={`w-5 h-5 transition-colors duration-200 ${
+                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                }`} />
               </div>
               
               <div className="space-y-6">
                 {scheduleData[dateKey].map((item, index) => (
                   <div key={index} className="flex items-start">
                     <div className="flex flex-col items-center mr-6">
-                      <div className="text-base font-bold text-gray-900 mb-2">
+                      <div className={`text-base font-bold mb-2 transition-colors duration-200 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
                         {item.time}
                       </div>
                       {index < scheduleData[dateKey].length - 1 && (
-                        <div className="w-px h-10 bg-purple-200"></div>
+                        <div className={`w-px h-10 transition-colors duration-200 ${
+                          isDarkMode ? 'bg-purple-700' : 'bg-purple-200'
+                        }`}></div>
                       )}
                     </div>
                     <div className="flex-1 pb-3">
-                      <div className="text-sm text-gray-500 mb-2">{item.role}</div>
-                      <div className="text-base font-semibold text-gray-900">{item.task}</div>
+                      <div className={`text-sm mb-2 transition-colors duration-200 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        {item.role}
+                      </div>
+                      <div className={`text-base font-semibold transition-colors duration-200 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        {item.task}
+                      </div>
                     </div>
                   </div>
                 ))}

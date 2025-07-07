@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Search, MapPin, Plus, Briefcase, X } from 'lucide-react';
+import { Search, MapPin, Plus, Briefcase, X, Bell } from 'lucide-react';
 
 const JobBoard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,12 +42,21 @@ const JobBoard = () => {
       salary: '$1000',
       period: 'Month',
       tags: ['Sales', 'Full Time']
+    },
+    {
+      id: 4,
+      title: 'React JS',
+      company: 'Developer',
+      location: 'New York, USA',
+      salary: '$2000',
+      period: 'Month',
+      tags: ['Developer', 'Full Time']
     }
   ]);
 
   const [inactiveJobs] = useState([
     {
-      id: 4,
+      id: 5,
       title: 'Hr Executive',
       company: 'HR',
       location: 'California, USA',
@@ -56,7 +65,7 @@ const JobBoard = () => {
       tags: ['HR', 'Full Time', 'Remote']
     },
     {
-      id: 5,
+      id: 6,
       title: 'Python Developer',
       company: 'Developer',
       location: 'New York, USA',
@@ -68,7 +77,7 @@ const JobBoard = () => {
 
   const [completedJobs] = useState([
     {
-      id: 6,
+      id: 7,
       title: 'UI/UX Designer',
       company: 'Design',
       location: 'California, USA',
@@ -77,7 +86,7 @@ const JobBoard = () => {
       tags: ['Design', 'Full Time', 'Remote']
     },
     {
-      id: 7,
+      id: 8,
       title: 'Sr. UX Researcher',
       company: 'Design',
       location: 'New York, USA',
@@ -86,7 +95,7 @@ const JobBoard = () => {
       tags: ['Design', 'Full Time']
     },
     {
-      id: 8,
+      id: 9,
       title: 'BDM',
       company: 'Sales',
       location: 'New York, USA',
@@ -109,23 +118,35 @@ const JobBoard = () => {
     tags: string[];
   };
 
+  
+  const filterJobs = (jobs: Job[]) => {
+    if (!searchTerm) return jobs;
+    
+    return jobs.filter(job =>
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  };
+
   const JobCard = ({ job }: { job: Job }) => (
-    <div className="bg-white rounded-lg p-4 mb-4 border border-gray-100 shadow-sm">
-      <div className="flex items-start space-x-3 mb-3">
-        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Briefcase className="w-4 h-4 text-gray-600" />
+    <div className="bg-white rounded-lg p-6 mb-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start space-x-4 mb-4">
+        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Briefcase className="w-6 h-6 text-gray-600" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-sm mb-1">{job.title}</h3>
-          <p className="text-gray-400 text-xs">{job.company}</p>
+          <h3 className="font-semibold text-gray-900 text-lg mb-1">{job.title}</h3>
+          <p className="text-gray-500 text-sm">{job.company}</p>
         </div>
       </div>
       
-      <div className="flex flex-wrap gap-1 mb-3">
+      <div className="flex flex-wrap gap-2 mb-4">
         {job.tags.map((tag, index) => (
           <span
             key={index}
-            className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium"
+            className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium"
           >
             {tag}
           </span>
@@ -133,13 +154,13 @@ const JobBoard = () => {
       </div>
       
       <div className="flex items-center justify-between">
-        <div className="flex items-center text-gray-500 text-xs">
-          <MapPin className="w-3 h-3 mr-1" />
+        <div className="flex items-center text-gray-500 text-sm">
+          <MapPin className="w-4 h-4 mr-2" />
           {job.location}
         </div>
         <div className="text-right">
-          <span className="text-base font-bold text-gray-900">{job.salary}</span>
-          <span className="text-gray-500 text-xs">/{job.period}</span>
+          <span className="text-lg font-bold text-gray-900">{job.salary}</span>
+          <span className="text-gray-500 text-sm">/{job.period}</span>
         </div>
       </div>
     </div>
@@ -152,14 +173,14 @@ const JobBoard = () => {
   };
 
   const JobColumn = ({ title, jobs, dotColor }: JobColumnProps) => (
-    <div className="flex-1 bg-gray-50">
-      <div className="p-4">
-        <div className="flex items-center space-x-2 mb-4">
-          <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
-          <h2 className="font-semibold text-gray-900 text-sm">{title}</h2>
+    <div className="flex-1 min-h-screen bg-gray-50">
+      <div className="p-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
+          <h2 className="font-semibold text-gray-900 text-lg">{title}</h2>
         </div>
         <div>
-          {jobs.map((job) => (
+          {filterJobs(jobs).map((job) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>
@@ -211,10 +232,53 @@ const JobBoard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <div className=" px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
+            <p className="text-sm text-gray-500">Show All Jobs</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Top Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 w-80 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+            
+           
+            <button className="p-2 text-gray-400 hover:text-gray-600">
+              <Bell className="w-6 h-6" />
+            </button>
+            
+         
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 cursor-pointer">
+              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-600">RA</span>
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-gray-900">Robert Allen</p>
+                <p className="text-xs text-gray-500">HR Manager</p>
+              </div>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -222,12 +286,12 @@ const JobBoard = () => {
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm w-80"
+              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 bg-white text-sm w-80"
             />
           </div>
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Job</span>
@@ -235,7 +299,7 @@ const JobBoard = () => {
         </div>
       </div>
 
-      {/* Three Column Layout */}
+      
       <div className="flex min-h-screen">
         <JobColumn 
           title="Active Jobs" 
@@ -256,7 +320,7 @@ const JobBoard = () => {
         />
       </div>
 
-      {/* Add New Job Modal */}
+      
       {showModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
@@ -271,13 +335,13 @@ const JobBoard = () => {
             </div>
             
             <div className="space-y-4">
-              {/* Select Department */}
+             
               <div>
                 <label className="block text-sm text-gray-600 mb-2">Select Department</label>
                 <select
                   value={newJob.company}
                   onChange={(e) => setNewJob({...newJob, company: e.target.value})}
-                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
@@ -286,23 +350,23 @@ const JobBoard = () => {
                 </select>
               </div>
 
-              {/* Job Title */}
+           
               <div>
                 <input
                   type="text"
                   placeholder="Enter Job Title"
                   value={newJob.title}
                   onChange={(e) => setNewJob({...newJob, title: e.target.value})}
-                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
 
-              {/* Select Location */}
+             
               <div>
                 <select
                   value={newJob.location}
                   onChange={(e) => setNewJob({...newJob, location: e.target.value})}
-                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">Select Location</option>
                   {locations.map((location) => (
@@ -311,18 +375,18 @@ const JobBoard = () => {
                 </select>
               </div>
 
-              {/* Salary */}
+            
               <div>
                 <input
                   type="text"
                   placeholder="Enter Salary (e.g., $3000)"
                   value={newJob.salary}
                   onChange={(e) => setNewJob({...newJob, salary: e.target.value})}
-                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
 
-              {/* Job Type */}
+             
               <div>
                 <label className="block text-sm text-gray-600 mb-2">Job Type</label>
                 <div className="flex space-x-4">
@@ -349,7 +413,7 @@ const JobBoard = () => {
                 </div>
               </div>
 
-              {/* Work Type */}
+             
               <div>
                 <label className="block text-sm text-gray-600 mb-2">Select Type</label>
                 <div className="flex space-x-4">
@@ -377,7 +441,7 @@ const JobBoard = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={handleCancel}
@@ -387,7 +451,7 @@ const JobBoard = () => {
               </button>
               <button
                 onClick={handleAddJob}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 Add
               </button>

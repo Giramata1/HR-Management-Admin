@@ -40,7 +40,7 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 px-6 py-8">
+    <div className="min-h-screen text-gray-900 px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold">Attendance</h1>

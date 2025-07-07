@@ -27,7 +27,7 @@ type Props = {
   onNext: () => void;
 };
 
-// Default form data to prevent undefined errors
+
 const defaultFormData = {
   firstName: '',
   lastName: '',
@@ -53,17 +53,17 @@ export default function PersonalForm({
   onCancel,
   onNext,
 }: Props) {
-  // Use default values if personalFormData is undefined
+ 
   const formData = personalFormData || defaultFormData;
   
-  // Fallback function if handleInputChange is not provided
+  
   const safeHandleInputChange = handleInputChange || ((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     console.warn('handleInputChange function not provided to PersonalForm. Field:', e.target.name, 'Value:', e.target.value);
   });
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
-      {/* Header */}
+      
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Add New Employee</h1>
         <div className="flex items-center text-sm text-gray-500">
@@ -73,10 +73,7 @@ export default function PersonalForm({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-     
-
-      {/* Profile Image */}
+      
       <div className="mb-8">
         <div
           className="w-24 h-24 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
@@ -103,7 +100,7 @@ export default function PersonalForm({
         />
       </div>
 
-      {/* Form Fields */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div>
           <input
@@ -262,7 +259,7 @@ export default function PersonalForm({
         </div>
       </div>
 
-      {/* Action Buttons */}
+      
       <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
         <button
           onClick={onCancel || (() => console.warn('onCancel function not provided'))}

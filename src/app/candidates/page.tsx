@@ -109,7 +109,7 @@ export default function CandidateList() {
 
   return (
     <div className="min-h-screen bg-white p-6">
-      {/* Header */}
+      
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Candidates</h1>
@@ -149,7 +149,7 @@ export default function CandidateList() {
         </div>
       </div>
 
-      {/* Table */}
+      
       <div className="overflow-x-auto border rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 text-gray-500 text-sm">
@@ -200,7 +200,7 @@ export default function CandidateList() {
         </table>
       </div>
 
-      {/* Pagination */}
+     
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
         <div className="flex items-center space-x-2">
           <span>Showing</span>
