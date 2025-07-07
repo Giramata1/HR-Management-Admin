@@ -1,13 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 
+// Dark mode hook shared with Sidebar
+const useDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  return isDarkMode;
+};
+
 function DashboardPreview() {
   return (
-    <div className="w-full h-full flex items-end justify-end bg-[#f8f6ff] p-9">
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 max-w-[80%]">
+    <div className="w-full h-full flex items-end justify-end bg-[#f8f6ff] dark:bg-gray-900 p-9">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 max-w-[80%]">
         <Image
           src="/image.png"
           alt="Dashboard Screenshot"
@@ -29,11 +56,11 @@ function ForgotPasswordForm({ onBack, onNext }: { onBack: (e: React.MouseEvent) 
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-8 py-12 space-y-8 bg-white">
+    <div className="w-full max-w-md mx-auto px-8 py-12 space-y-8 bg-white dark:bg-gray-900">
       <div className="text-left">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-500 text-sm font-medium hover:text-gray-700 mb-8"
+          className="flex items-center text-gray-500 dark:text-gray-400 text-sm font-medium hover:text-gray-700 dark:hover:text-gray-200 mb-8"
         >
           ← Back
         </button>
@@ -41,10 +68,10 @@ function ForgotPasswordForm({ onBack, onNext }: { onBack: (e: React.MouseEvent) 
           <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white">
             <span className="text-lg font-bold">∞</span>
           </div>
-          <h1 className="text-2xl font-bold text-black">HRMS</h1>
+          <h1 className="text-2xl font-bold text-black dark:text-white">HRMS</h1>
         </div>
-        <h2 className="text-2xl font-bold text-black mb-2">Forgot Password</h2>
-        <p className="text-sm text-gray-500 mb-8">
+        <h2 className="text-2xl font-bold text-black dark:text-white mb-2">Forgot Password</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
           Enter your registered email address, we&apos;ll send you a code to reset your password
         </p>
       </div>
@@ -55,7 +82,7 @@ function ForgotPasswordForm({ onBack, onNext }: { onBack: (e: React.MouseEvent) 
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 pt-6 pb-2 text-black border border-purple-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+            className="w-full px-4 pt-6 pb-2 text-black dark:text-white bg-white dark:bg-gray-800 border border-purple-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
             placeholder="robertallen@example.com"
           />
           <label className="absolute left-4 top-2 text-sm text-purple-600">Email Address</label>
@@ -75,7 +102,6 @@ function ForgotPasswordForm({ onBack, onNext }: { onBack: (e: React.MouseEvent) 
 
 function VerifyOTPForm({ onBack, onVerify }: { onBack: (e: React.MouseEvent) => void; onVerify: (e: React.MouseEvent) => void }) {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const correctOtp = '1234'; 
 
   const handleOtpChange = (index: number, value: string) => {
     const newOtp = [...otp];
@@ -90,16 +116,15 @@ function VerifyOTPForm({ onBack, onVerify }: { onBack: (e: React.MouseEvent) => 
 
   const handleVerifySubmit = (e: React.MouseEvent) => {
     e.preventDefault();
-    const enteredOtp = otp.join('');
-    if (enteredOtp === correctOtp) onVerify(e);
+    if (otp.join('') === '1234') onVerify(e);
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-8 py-12 space-y-8 bg-white">
+    <div className="w-full max-w-md mx-auto px-8 py-12 space-y-8 bg-white dark:bg-gray-900">
       <div className="text-left">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-500 text-sm font-medium hover:text-gray-700 mb-8"
+          className="flex items-center text-gray-500 dark:text-gray-400 text-sm font-medium hover:text-gray-700 dark:hover:text-gray-200 mb-8"
         >
           ← Back
         </button>
@@ -107,11 +132,11 @@ function VerifyOTPForm({ onBack, onVerify }: { onBack: (e: React.MouseEvent) => 
           <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white">
             <span className="text-lg font-bold">∞</span>
           </div>
-          <h1 className="text-2xl font-bold text-black">HRMS</h1>
+          <h1 className="text-2xl font-bold text-black dark:text-white">HRMS</h1>
         </div>
-        <h2 className="text-2xl font-bold text-black mb-2">Enter OTP</h2>
-        <p className="text-sm text-gray-500 mb-8">
-          We have sent a code to your registered email address rebeccabyamungu6@gmail.com
+        <h2 className="text-2xl font-bold text-black dark:text-white mb-2">Enter OTP</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+          We have sent a code to your registered email address
         </p>
       </div>
 
@@ -124,7 +149,7 @@ function VerifyOTPForm({ onBack, onVerify }: { onBack: (e: React.MouseEvent) => 
               type="text"
               value={digit}
               onChange={(e) => handleOtpChange(index, e.target.value)}
-              className="w-12 h-12 text-center text-xl font-semibold border border-purple-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+              className="w-12 h-12 text-center text-xl font-semibold text-black dark:text-white bg-white dark:bg-gray-800 border border-purple-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
               maxLength={1}
               autoFocus={index === 0}
             />
@@ -144,6 +169,7 @@ function VerifyOTPForm({ onBack, onVerify }: { onBack: (e: React.MouseEvent) => 
 }
 
 function LoginForm() {
+  useDarkMode();
   const [showPassword, setShowPassword] = useState(false);
   const [, setError] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
@@ -181,16 +207,16 @@ function LoginForm() {
   };
 
   return passwordUpdated ? (
-    <div className="min-h-screen flex items-center justify-center bg-white px-6 w-full">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 px-6 w-full">
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-4 max-w-sm">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center space-y-4 max-w-sm">
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center">
               🎉
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-black">Password Update</h2>
-          <p className="text-sm text-gray-500">Your password has been updated successfully</p>
+          <h2 className="text-2xl font-bold text-black dark:text-white">Password Update</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-300">Your password has been updated successfully</p>
           <button
             onClick={handleBack}
             className="w-full py-3 rounded-lg text-white text-sm font-semibold bg-purple-600 hover:bg-purple-700 transition-colors"
@@ -205,20 +231,20 @@ function LoginForm() {
   ) : forgotPassword ? (
     <ForgotPasswordForm onBack={handleBack} onNext={handleNext} />
   ) : (
-    <div className="min-h-screen flex items-center justify-center bg-white px-6 w-full">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 px-6 w-full">
       <div className="w-full max-w-sm space-y-10">
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
               ∞
             </div>
-            <h1 className="text-2xl font-bold text-black">HRMS</h1>
+            <h1 className="text-2xl font-bold text-black dark:text-white">HRMS</h1>
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-black flex items-center gap-1">
+            <h2 className="text-2xl font-bold text-black dark:text-white flex items-center gap-1">
               Welcome <span className="text-xl">👋</span>
             </h2>
-            <p className="text-gray-400 text-sm">Please login here</p>
+            <p className="text-gray-400 dark:text-gray-300 text-sm">Please login here</p>
           </div>
         </div>
 
@@ -227,7 +253,7 @@ function LoginForm() {
             <input
               type="email"
               required
-              className="w-full px-4 pt-6 pb-2 text-black border border-purple-500 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 pt-6 pb-2 text-black dark:text-white bg-white dark:bg-gray-800 border border-purple-500 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
               defaultValue="rebeccabyamungu6@gmail.com"
             />
             <label className="absolute left-4 top-2 text-sm text-purple-600">Email Address</label>
@@ -237,7 +263,7 @@ function LoginForm() {
             <input
               type={showPassword ? 'text' : 'password'}
               required
-              className="w-full px-4 pt-6 pb-2 text-black border border-purple-500 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 pt-6 pb-2 text-black dark:text-white bg-white dark:bg-gray-800 border border-purple-500 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
               defaultValue="password"
             />
             <label className="absolute left-4 top-2 text-sm text-purple-600">Password</label>
@@ -251,7 +277,7 @@ function LoginForm() {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center space-x-2 text-black">
+            <label className="flex items-center space-x-2 text-black dark:text-white">
               <input
                 type="checkbox"
                 className="w-4 h-4 accent-purple-600"
@@ -286,7 +312,7 @@ export default function Home() {
       <div className="w-3/5 hidden md:flex">
         <DashboardPreview />
       </div>
-      <div className="w-full md:w-2/5 flex items-center justify-center bg-white">
+      <div className="w-full md:w-2/5 flex items-center justify-center bg-white dark:bg-gray-900">
         <LoginForm />
       </div>
     </div>

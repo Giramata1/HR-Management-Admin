@@ -1,25 +1,25 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Bell, ChevronDown, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
+import Link from 'next/link'
 
 const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) => (
   <input
-    className={`py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 ${className || ''}`}
+    className={`py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-800 text-black dark:text-white ${className || ''}`}
     {...props}
   />
 );
 
 const Button = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) => (
-  <button className={`px-3 py-2 rounded-md border text-sm ${className || ''}`} {...props}>
+  <button className={`px-3 py-2 rounded-md border text-sm text-gray-600 dark:text-gray-300 ${className || ''}`} {...props}>
     {children}
   </button>
 );
 
 const Avatar = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={`rounded-full bg-gray-100 text-gray-600 font-semibold flex items-center justify-center ${className || ''}`}>
+  <div className={`rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-semibold flex items-center justify-center ${className || ''}`}>
     {children}
   </div>
 );
@@ -29,6 +29,32 @@ const AvatarFallback = ({ children, className }: { children: React.ReactNode; cl
     {children}
   </div>
 );
+
+const useDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  return isDarkMode;
+};
 
 interface Employee {
   name: string;
@@ -41,6 +67,7 @@ interface Departments {
 }
 
 const Index = () => {
+  useDarkMode();
   const [searchTerm, setSearchTerm] = useState('');
 
   const departments: Departments = {
@@ -93,13 +120,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">All Departments</h1>
-              <p className="text-sm text-gray-500 mt-1">All Departments Information</p>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">All Departments</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">All Departments Information</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -112,16 +139,16 @@ const Index = () => {
                   className="pl-10 w-64"
                 />
               </div>
-              <Button className="text-gray-400 hover:text-gray-600 border-0 p-2" title="notifications">
+              <Button className="text-gray-400 hover:text-gray-600 dark:hover:text-white border-0 p-2" title="notifications">
                 <Bell className="h-5 w-5" />
               </Button>
-              <div className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg px-3 py-2">
+              <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>RA</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">Robert Allen</p>
-                  <p className="text-xs text-gray-500">HR Manager</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">HR Manager</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-400" />
               </div>
@@ -146,12 +173,12 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {Object.entries(filteredDepartments).map(([deptName, employees]) => (
-            <div key={deptName} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
+            <div key={deptName} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{deptName}</h3>
-                    <p className="text-sm text-gray-500">{employees.length} Members</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{deptName}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{employees.length} Members</p>
                   </div>
                   <Link
                     href={`/departments/all`}
@@ -161,9 +188,9 @@ const Index = () => {
                   </Link>
                 </div>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {employees.slice(0, 5).map((employee, idx) => (
-                  <div key={idx} className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div key={idx} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-10 w-10">
@@ -172,8 +199,8 @@ const Index = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{employee.name}</p>
-                          <p className="text-sm text-gray-500">{employee.title}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{employee.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{employee.title}</p>
                         </div>
                       </div>
                       <ChevronRight className="h-5 w-5 text-gray-400" />
