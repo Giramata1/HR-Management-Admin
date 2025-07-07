@@ -7,6 +7,8 @@ import AttendanceChart from '@/components/Attendancechart';
 import Calendar from '@/components/Calendar';
 import AttendanceTable from '@/components/AttendanceTable';
 
+
+
 export default function DashboardPage() {
   return (
     <div className="flex h-screen">
@@ -20,6 +22,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-8">
             <DashboardCards />
             <AttendanceChart />
+            
           </div>
           <Calendar />
         </div>
