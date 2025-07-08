@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
-import { ChevronDown, Calendar, User, ChevronRight } from 'lucide-react';
+import { ChevronDown, Calendar, User } from 'lucide-react';
 
 type Props = {
   profileImage: string | null;
@@ -56,17 +56,13 @@ export default function PersonalForm({
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow">
-      {/* Header */}
+     
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Add New Employee</h1>
         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-          <span>All Employee</span>
-          <ChevronRight className="w-4 h-4 mx-2" />
-          <span>Add New Employee</span>
         </div>
       </div>
 
-      {/* Profile Image Upload */}
+     
       <div className="mb-8">
         <div
           className="w-24 h-24 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
@@ -93,65 +89,109 @@ export default function PersonalForm({
         />
       </div>
 
-      {/* Form Inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {[
-          { name: 'firstName', placeholder: 'First Name' },
-          { name: 'lastName', placeholder: 'Last Name' },
-          { name: 'mobileNumber', placeholder: 'Mobile Number' },
-          { name: 'emailAddress', placeholder: 'Email Address', type: 'email' },
-        ].map(({ name, placeholder, type = 'text' }) => (
+      
+      <div className="space-y-6 mb-8">
+        {/* First row - First Name and Last Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
-            key={name}
-            type={type}
-            name={name}
-            value={formData[name as keyof typeof formData]}
+            type="text"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleInputChange}
-            placeholder={placeholder}
+            placeholder="First Name"
             className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-        ))}
-
-        {/* Date of Birth */}
-        <div className="relative">
           <input
-            type="date"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
+            type="text"
+            name="lastName"
+            value={formData.lastName}
             onChange={handleInputChange}
-            placeholder="Date of Birth"
+            placeholder="Last Name"
             className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          <Calendar className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
         </div>
 
-        {/* Dropdowns */}
-        {[
-          { name: 'maritalStatus', options: ['Single', 'Married'] },
-          { name: 'gender', options: ['Male', 'Female'] },
-          { name: 'nationality', options: ['Rwandan', 'Kenyan', 'Ugandan'] },
-          { name: 'city', options: ['Kigali', 'Musanze'] },
-          { name: 'state', options: ['Kigali City', 'Northern Province', 'Southern Province', 'Eastern Province', 'Western Province'] },
-          { name: 'zipCode', options: ['00000', '10001', '10002'] },
-        ].map(({ name, options }) => (
-          <div className="relative" key={name}>
+        {/* Second row - Mobile Number and Email */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <input
+            type="text"
+            name="mobileNumber"
+            value={formData.mobileNumber}
+            onChange={handleInputChange}
+            placeholder="Mobile Number"
+            className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="email"
+            name="emailAddress"
+            value={formData.emailAddress}
+            onChange={handleInputChange}
+            placeholder="Email Address"
+            className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
+        {/* Third row - Date of Birth and Marital Status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="relative">
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              placeholder="Date of Birth"
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <Calendar className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+          <div className="relative">
             <select
-              name={name}
-              value={formData[name as keyof typeof formData]}
+              name="maritalStatus"
+              value={formData.maritalStatus}
               onChange={handleInputChange}
               className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-              <option value="" disabled hidden>{name.replace(/([A-Z])/g, ' $1')}</option>
-              {options.map((opt) => (
-                <option key={opt.toLowerCase()} value={opt.toLowerCase()}>{opt}</option>
-              ))}
+              <option value="" disabled hidden>Marital Status</option>
+              <option value="single">Single</option>
+              <option value="married">Married</option>
             </select>
             <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
           </div>
-        ))}
+        </div>
 
-        {/* Address (Full Width) */}
-        <div className="md:col-span-2">
+        {/* Fourth row - Gender and Nationality */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="relative">
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              name="nationality"
+              value={formData.nationality}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>Nationality</option>
+              <option value="rwandan">Rwandan</option>
+              <option value="kenyan">Kenyan</option>
+              <option value="ugandan">Ugandan</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Fifth row - Address (full width) */}
+        <div>
           <input
             type="text"
             name="address"
@@ -161,9 +201,56 @@ export default function PersonalForm({
             className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
+
+        {/* Sixth row - City, State, ZIP Code on same line */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="relative">
+            <select
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>City</option>
+              <option value="kigali">Kigali</option>
+              <option value="musanze">Musanze</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              name="state"
+              value={formData.state}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>State</option>
+              <option value="kigali city">Kigali City</option>
+              <option value="northern province">Northern Province</option>
+              <option value="southern province">Southern Province</option>
+              <option value="eastern province">Eastern Province</option>
+              <option value="western province">Western Province</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              name="zipCode"
+              value={formData.zipCode}
+              onChange={handleInputChange}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled hidden>ZIP Code</option>
+              <option value="00000">00000</option>
+              <option value="10001">10001</option>
+              <option value="10002">10002</option>
+            </select>
+            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          </div>
+        </div>
       </div>
 
-      {/* Buttons */}
+     
       <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={onCancel}

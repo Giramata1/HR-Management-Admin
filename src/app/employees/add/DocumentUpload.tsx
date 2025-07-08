@@ -45,7 +45,7 @@ export default function DocumentUpload({
         ))}
       </div>
 
-      {/* Hidden File Inputs */}
+     
       {docTitles.map((_, index) => (
         <input
           key={`input-${index}`}

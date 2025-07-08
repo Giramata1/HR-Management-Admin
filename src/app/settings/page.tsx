@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Search, Bell, ChevronDown } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface ToggleProps {
   enabled: boolean;
@@ -16,26 +17,13 @@ interface DropdownProps {
 }
 
 const Settings = () => {
-  const [appearance, setAppearance] = useState('Light');
+  const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState('English');
   const [twoFactor, setTwoFactor] = useState(true);
   const [mobilePush, setMobilePush] = useState(true);
   const [desktopNotification, setDesktopNotification] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // Dark mode setup
-  useEffect(() => {
-    const theme = localStorage.getItem('theme');
-    if (
-      theme === 'dark' ||
-      (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    ) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
 
   const Toggle = ({ enabled, onToggle }: ToggleProps) => (
     <div
@@ -61,7 +49,7 @@ const Settings = () => {
       >
         {options.map((option: string) => (
           <option key={option} value={option}>
-            {option}
+            {option.charAt(0).toUpperCase() + option.slice(1)}
           </option>
         ))}
       </select>
@@ -109,7 +97,6 @@ const Settings = () => {
                       <h3 className="font-medium text-gray-900 dark:text-white">Notifications</h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                      {/* Notification Item */}
                       <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 cursor-pointer">
                         <div className="flex items-start space-x-3">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -124,7 +111,6 @@ const Settings = () => {
                           </div>
                         </div>
                       </div>
-                      {/* More notifications... */}
                     </div>
                     <div className="p-3 border-t border-gray-200 dark:border-gray-700">
                       <button
@@ -141,7 +127,7 @@ const Settings = () => {
 
             <div className="flex items-center space-x-2">
               <Image
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"
                 alt="Robert Allen"
                 width={32}
                 height={32}
@@ -160,22 +146,23 @@ const Settings = () => {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {/* Appearance */}
+
+           
             <div className="p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Appearance</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Customize how your theme looks on your device
+                  Select your preferred theme
                 </p>
               </div>
               <Dropdown
-                value={appearance}
-                options={['Light', 'Dark', 'Auto']}
-                onChange={setAppearance}
+                value={theme}
+                options={['light', 'dark', 'auto']}
+                onChange={(value) => setTheme(value as 'light' | 'dark' | 'auto')}
               />
             </div>
 
-            {/* Language */}
+        
             <div className="p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Language</h3>
@@ -190,7 +177,7 @@ const Settings = () => {
               />
             </div>
 
-            {/* Toggles */}
+           
             <div className="p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Two-factor Authentication</h3>
@@ -205,7 +192,7 @@ const Settings = () => {
               <div>
                 <h3 className="text-lg font-medium">Mobile Push Notifications</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive push notification
+                  Receive push notifications on mobile
                 </p>
               </div>
               <Toggle enabled={mobilePush} onToggle={() => setMobilePush(!mobilePush)} />
@@ -215,7 +202,7 @@ const Settings = () => {
               <div>
                 <h3 className="text-lg font-medium">Desktop Notification</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive push notification in desktop
+                  Receive push notifications on desktop
                 </p>
               </div>
               <Toggle
@@ -228,7 +215,7 @@ const Settings = () => {
               <div>
                 <h3 className="text-lg font-medium">Email Notifications</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive email notification
+                  Receive email updates
                 </p>
               </div>
               <Toggle

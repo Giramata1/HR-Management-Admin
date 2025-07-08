@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'  
 
 interface Employee {
   name: string
@@ -10,7 +11,6 @@ interface Employee {
   status: 'On Time' | 'Late'
   avatar: string
 }
-
 
 const employees: Employee[] = [
   {
@@ -58,7 +58,6 @@ const employees: Employee[] = [
 export default function AttendanceTable() {
   const [isDarkMode, setIsDarkMode] = useState(false)
 
-  
   useEffect(() => {
     const checkTheme = () => {
       const savedTheme = localStorage.getItem('theme')
@@ -66,24 +65,17 @@ export default function AttendanceTable() {
       setIsDarkMode(savedTheme === 'dark' || documentHasDarkClass)
     }
 
-    
     checkTheme()
 
-   
     const observer = new MutationObserver(checkTheme)
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
     })
 
-   
-    interface StorageEventWithKey extends StorageEvent {
-      key: string | null;
-    }
-
-    const handleStorageChange = (e: StorageEventWithKey) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme') {
-      checkTheme()
+        checkTheme()
       }
     }
     window.addEventListener('storage', handleStorageChange)
@@ -104,8 +96,8 @@ export default function AttendanceTable() {
         }`}>
           Attendance Overview
         </h3>
-        <a 
-          href="#" 
+        <Link 
+          href="/attendance"  
           className={`text-sm font-medium transition-colors duration-200 ${
             isDarkMode 
               ? 'text-indigo-400 hover:text-indigo-300' 
@@ -113,7 +105,7 @@ export default function AttendanceTable() {
           }`}
         >
           View All
-        </a>
+        </Link>
       </div>
 
       <div className="overflow-x-auto">

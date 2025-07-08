@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   UserRound,
   CalendarCheck,
@@ -62,7 +63,6 @@ type AttendanceRecord = {
   remarks?: string;
 };
 
-// Define props interface
 interface EmployeeProfileProps {
   employee: Employee;
 }
@@ -71,6 +71,10 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
   const [activeTab, setActiveTab] = useState('personal');
   const [activeSection, setActiveSection] = useState('profile');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [emailAddress, setEmailAddress] = useState(employee.professionalInfo.emailAddress);
+  const [slackId, setSlackId] = useState('');
+  const [skypeId, setSkypeId] = useState('');
+  const [githubId, setGithubId] = useState('');
 
   const { name, designation, avatar, personalInfo, professionalInfo } = employee;
 
@@ -119,11 +123,10 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
     }
   };
 
-  // Sync with global dark mode
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
-    console.log('Syncing dark mode:', isDark); // Debug
+    console.log('Syncing dark mode:', isDark);
   }, []);
 
   const themeClasses = {
@@ -144,9 +147,13 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
     inactiveSection: isDarkMode ? 'text-gray-400 hover:text-violet-400' : 'text-gray-500 hover:text-violet-600',
   };
 
+  const handleSave = () => {
+    console.log('Saving:', { emailAddress, slackId, skypeId, githubId });
+    // Add save logic here
+  };
+
   return (
     <div className={`${themeClasses.bg} rounded-xl shadow-sm max-w-7xl mx-auto p-6 space-y-6 min-h-screen transition-colors duration-200`}>
-      {/* Header */}
       <div className="flex justify-between items-center flex-wrap">
         <div>
           <h2 className={`text-lg font-semibold ${themeClasses.text}`}>{name}</h2>
@@ -164,9 +171,11 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <img
+            <Image 
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=36&h=36&fit=crop&crop=face"
               alt="Robert Allen"
+              width={36}
+              height={36}
               className="w-9 h-9 rounded-full object-cover"
             />
             <div className="leading-tight">
@@ -177,10 +186,15 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
         </div>
       </div>
 
-      {/* Profile Header */}
       <div className={`flex justify-between items-center flex-wrap border-b ${themeClasses.borderB} pb-6`}>
         <div className="flex items-center gap-4">
-          <img src={avatar} alt={name} className="w-20 h-20 rounded-full object-cover" />
+          <Image 
+            src={avatar} 
+            alt={name} 
+            width={80} 
+            height={80} 
+            className="w-20 h-20 rounded-full object-cover" 
+          />
           <div>
             <h3 className={`text-xl font-semibold ${themeClasses.text}`}>{name}</h3>
             <p className={`text-sm ${themeClasses.textSecondary}`}>{designation}</p>
@@ -192,9 +206,7 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
         </button>
       </div>
 
-      {/* Main Content */}
       <div className="flex gap-8">
-        {/* Sidebar */}
         <div className="w-52 space-y-2 text-sm">
           <button
             onClick={() => setActiveSection('profile')}
@@ -230,12 +242,9 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
           </button>
         </div>
 
-        {/* Content Area */}
         <div className="flex-1 space-y-6">
-          {/* Profile Section */}
           {activeSection === 'profile' && (
             <>
-              {/* Sub-tabs */}
               <div className={`border-b ${themeClasses.borderB}`}>
                 <div className="flex gap-8 text-sm">
                   <button
@@ -273,7 +282,6 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
                 </div>
               </div>
 
-              {/* Tab Content */}
               {activeTab === 'personal' && (
                 <div className={`grid grid-cols-2 gap-6 text-sm ${themeClasses.text}`}>
                   <div>
@@ -361,22 +369,85 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
               )}
 
               {activeTab === 'documents' && (
-                <div className={`text-center py-12 ${themeClasses.textMuted}`}>
-                  <FileText className={`w-12 h-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                  <p>Documents section content will be displayed here.</p>
+                <div className={`grid grid-cols-2 gap-4 text-sm ${themeClasses.text}`}>
+                  {['Appointment Letter.pdf', 'Salary Slip_June.pdf', 'Salary Slip_May.pdf', 'Salary Slip_April.pdf', 'Relieving Letter.pdf', 'Experience Letter.pdf'].map((doc, index) => (
+                    <div key={index} className={`flex items-center gap-2 p-2 ${themeClasses.cardBg} ${themeClasses.border} rounded-md`}>
+                      <FileText className={`w-4 h-4 ${themeClasses.textMuted}`} />
+                      <span className={themeClasses.text}>{doc}</span>
+                      <button className={`ml-auto text-violet-600 hover:text-violet-500`}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button className={`text-green-600 hover:text-green-500`}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
               {activeTab === 'account' && (
-                <div className={`text-center py-12 ${themeClasses.textMuted}`}>
-                  <Lock className={`w-12 h-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                  <p>Account access section content will be displayed here.</p>
+                <div className={`p-6 ${themeClasses.cardBg} ${themeClasses.border} rounded-lg`}>
+                  <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Account Access</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={themeClasses.textMuted}>Email Address</label>
+                        <input
+                          type="email"
+                          value={emailAddress}
+                          onChange={(e) => setEmailAddress(e.target.value)}
+                          className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                      <div>
+                        <label className={themeClasses.textMuted}>Slack ID</label>
+                        <input
+                          type="text"
+                          value={slackId}
+                          onChange={(e) => setSlackId(e.target.value)}
+                          className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
+                          placeholder="Enter Slack ID"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={themeClasses.textMuted}>Skype ID</label>
+                      <input
+                        type="text"
+                        value={skypeId}
+                        onChange={(e) => setSkypeId(e.target.value)}
+                        className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
+                        placeholder="Enter Skype ID"
+                      />
+                    </div>
+                    <div>
+                      <label className={themeClasses.textMuted}>GitHub ID</label>
+                      <input
+                        type="text"
+                        value={githubId}
+                        onChange={(e) => setGithubId(e.target.value)}
+                        className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
+                        placeholder="Enter GitHub ID"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSave}
+                      className="w-full bg-violet-600 text-white py-2 rounded-md hover:bg-violet-500 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               )}
             </>
           )}
 
-          {/* Attendance Section */}
           {activeSection === 'attendance' && (
             <div className={`${themeClasses.cardBg} border ${themeClasses.border} rounded-lg overflow-hidden`}>
               <div className="overflow-x-auto">
@@ -413,7 +484,6 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
             </div>
           )}
 
-          {/* Projects Section */}
           {activeSection === 'projects' && (
             <div className={`${themeClasses.cardBg} border ${themeClasses.border} rounded-lg overflow-hidden`}>
               <div className="overflow-x-auto">
@@ -476,7 +546,6 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
             </div>
           )}
 
-          {/* Leave Section */}
           {activeSection === 'leave' && (
             <div className={`text-center py-12 ${themeClasses.textMuted}`}>
               <Leaf className={`w-12 h-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />

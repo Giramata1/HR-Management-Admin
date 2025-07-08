@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
+type ThemeOption = 'light' | 'dark' | 'auto';
+
 interface ThemeContextType {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
+  theme: ThemeOption;
+  setTheme: (theme: ThemeOption) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -16,28 +18,36 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<ThemeOption>('light');
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    setIsDarkMode(saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches));
-    setMounted(true);
+    const savedTheme = (localStorage.getItem('theme') as ThemeOption) || 'auto';
+    setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      document.documentElement.classList.toggle('dark', isDarkMode);
-      localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    if (!theme) return;
+
+    localStorage.setItem('theme', theme);
+
+    const apply = (isDark: boolean) => {
+      document.documentElement.classList.toggle('dark', isDark);
+    };
+
+    if (theme === 'dark') apply(true);
+    else if (theme === 'light') apply(false);
+    else {
+    
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      apply(prefersDark.matches);
+      const handler = (e: MediaQueryListEvent) => apply(e.matches);
+      prefersDark.addEventListener('change', handler);
+      return () => prefersDark.removeEventListener('change', handler);
     }
-  }, [isDarkMode, mounted]);
-
-  const toggleTheme = () => setIsDarkMode(prev => !prev);
-
-  if (!mounted) return <>{children}</>;
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

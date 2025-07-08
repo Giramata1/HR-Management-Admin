@@ -1,17 +1,22 @@
+
 'use client';
 
 import './styles/globals.css';
 import Sidebar from '@/components/Sidebar';
 import { usePathname } from 'next/navigation';
-import { ThemeProvider } from '@/contexts/ThemeContext'; 
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/';
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-200">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-200"
+    >
+      <body>
         <ThemeProvider>
           <div className="flex">
             {!isLoginPage && <Sidebar />}

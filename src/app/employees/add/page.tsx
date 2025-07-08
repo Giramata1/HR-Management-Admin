@@ -1,13 +1,87 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { User, Briefcase, FileText, Lock, ChevronRight } from 'lucide-react';
+import { User, Briefcase, FileText, Lock, ChevronRight, Search, Bell, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image'; // Import next/image
 
-import Header from '@/components/Header';
 import PersonalForm from './PersonalForm';
 import ProfessionalForm from './ProfessionalForm';
 import DocumentUpload from './DocumentUpload';
 import AccountAccessForm from './AccountAccessForm';
+
+// Header Component
+const Header: React.FC = () => {
+  const router = useRouter();
+
+  const handleAllEmployeeClick = () => {
+    router.push('/employees');
+  };
+
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 mb-6">
+      <div className="flex items-center justify-between">
+        {/* Left side - Title and Breadcrumbs */}
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+            Add New Employee
+          </h1>
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <span 
+              className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
+              onClick={handleAllEmployeeClick}
+            >
+              All Employee
+            </span>
+            <span className="mx-2">›</span>
+            <span className="text-gray-800 dark:text-gray-200">
+              Add New Employee
+            </span>
+          </div>
+        </div>
+
+        {/* Right side - Search, Notifications, Profile */}
+        <div className="flex items-center space-x-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search"
+              className="pl-10 pr-4 py-2 w-80 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Notifications */}
+          <button className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+            <Bell className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+          </button>
+
+          {/* Profile */}
+          <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2">
+            <Image
+              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+              alt="Robert Allen"
+              width={40}
+              height={40}
+              className="rounded-full object-cover"
+            />
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                Robert Allen
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                HR Manager
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const steps = [
   { label: 'Personal Information', icon: <User className="w-5 h-5 mr-2" /> },
@@ -222,7 +296,7 @@ export default function AddEmployeePage() {
   };
 
   return (
-    <div className=" p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Header />
       {renderNavigationTabs(currentStep, setCurrentStep)}
 

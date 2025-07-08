@@ -1,9 +1,9 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Bell, ChevronDown, ChevronRight } from 'lucide-react';
-import Link from 'next/link'
+import Link from 'next/link';
+
 
 const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) => (
   <input
@@ -30,32 +30,6 @@ const AvatarFallback = ({ children, className }: { children: React.ReactNode; cl
   </div>
 );
 
-const useDarkMode = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  return isDarkMode;
-};
-
 interface Employee {
   name: string;
   title: string;
@@ -67,7 +41,7 @@ interface Departments {
 }
 
 const Index = () => {
-  useDarkMode();
+  
   const [searchTerm, setSearchTerm] = useState('');
 
   const departments: Departments = {
