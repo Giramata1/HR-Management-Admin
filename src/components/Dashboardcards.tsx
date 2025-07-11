@@ -7,13 +7,14 @@ import {
   BarChart2,
   Folder
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface MetricCard {
-  title: string
+  titleKey: string
   value: string
   change: string
   isPositive: boolean
-  date: string
+  dateKey: string
   iconBg: string
   iconBgDark: string
   icon: React.ReactNode
@@ -21,41 +22,41 @@ interface MetricCard {
 
 const metrics: MetricCard[] = [
   {
-    title: 'Total Employee',
+    titleKey: 'dashboard.totalEmployee',
     value: '560',
     change: '12%',
     isPositive: true,
-    date: 'Update: July 16, 2023',
+    dateKey: 'dashboard.updateDate',
     iconBg: 'bg-blue-50 text-blue-600',
     iconBgDark: 'bg-blue-900/20 text-blue-400',
     icon: <Users className="w-5 h-5" />
   },
   {
-    title: 'Total Applicant',
+    titleKey: 'dashboard.totalApplicant',
     value: '1050',
     change: '5%',
     isPositive: true,
-    date: 'Update: July 16, 2023',
+    dateKey: 'dashboard.updateDate',
     iconBg: 'bg-green-50 text-green-600',
     iconBgDark: 'bg-green-900/20 text-green-400',
     icon: <ClipboardList className="w-5 h-5" />
   },
   {
-    title: 'Today Attendance',
+    titleKey: 'dashboard.todayAttendance',
     value: '470',
     change: '8%',
     isPositive: false,
-    date: 'Update: July 16, 2023',
+    dateKey: 'dashboard.updateDate',
     iconBg: 'bg-red-50 text-red-600',
     iconBgDark: 'bg-red-900/20 text-red-400',
     icon: <BarChart2 className="w-5 h-5" />
   },
   {
-    title: 'Total Projects',
+    titleKey: 'dashboard.totalProjects',
     value: '250',
     change: '12%',
     isPositive: true,
-    date: 'Update: July 16, 2023',
+    dateKey: 'dashboard.updateDate',
     iconBg: 'bg-purple-50 text-purple-600',
     iconBgDark: 'bg-purple-900/20 text-purple-400',
     icon: <Folder className="w-5 h-5" />
@@ -63,9 +64,11 @@ const metrics: MetricCard[] = [
 ];
 
 export default function DashboardCards() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { t, i18n } = useTranslation();
 
-  
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     const checkTheme = () => {
       const savedTheme = localStorage.getItem('theme')
@@ -73,33 +76,37 @@ export default function DashboardCards() {
       setIsDarkMode(savedTheme === 'dark' || documentHasDarkClass)
     }
 
-    
     checkTheme()
 
-    
     const observer = new MutationObserver(checkTheme)
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
     })
 
-    
-    interface StorageEventWithKey extends StorageEvent {
-      key: string | null;
-    }
-
-    const handleStorageChange = (e: StorageEventWithKey) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme') {
         checkTheme()
       }
     }
     window.addEventListener('storage', handleStorageChange)
 
+    // Wait for i18n to be initialized before rendering
+    if (i18n.isInitialized) {
+      setReady(true)
+    } else {
+      const onInit = () => setReady(true)
+      i18n.on('initialized', onInit)
+      return () => i18n.off('initialized', onInit)
+    }
+
     return () => {
       observer.disconnect()
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [])
+  }, [i18n])
+
+  if (!ready) return null // or a loader
 
   return (
     <div className="grid grid-cols-2 gap-6 max-w-4xl">
@@ -112,7 +119,6 @@ export default function DashboardCards() {
               : 'bg-white border-gray-100'
           }`}
         >
-          
           <div className="flex items-center mb-6">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 ${
               isDarkMode ? metric.iconBgDark : metric.iconBg
@@ -122,11 +128,10 @@ export default function DashboardCards() {
             <div className={`text-sm font-medium transition-colors duration-200 ${
               isDarkMode ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              {metric.title}
+              {t(metric.titleKey)}
             </div>
           </div>
                      
-         
           <div className="flex items-center justify-between mb-4">
             <div className={`text-4xl font-bold transition-colors duration-200 ${
               isDarkMode ? 'text-white' : 'text-gray-900'
@@ -149,14 +154,14 @@ export default function DashboardCards() {
             </div>
           </div>
                      
-          
           <div className={`border-t pt-3 transition-colors duration-200 ${
             isDarkMode ? 'border-gray-700' : 'border-gray-100'
           }`}>
             <div className={`text-xs transition-colors duration-200 ${
               isDarkMode ? 'text-gray-500' : 'text-gray-400'
             }`}>
-              {metric.date}
+              {/* Pass static date string or format date in a stable way */}
+              {t(metric.dateKey, { date: 'July 16, 2023' })}
             </div>
           </div>
         </div>

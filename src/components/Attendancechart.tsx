@@ -9,8 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
-const data = [
+const rawData = [
   { day: 'Mon', Present: 60, Late: 30, Absent: 10 },
   { day: 'Tue', Present: 60, Late: 25, Absent: 15 },
   { day: 'Wed', Present: 45, Late: 35, Absent: 20 },
@@ -21,50 +22,39 @@ const data = [
 ]
 
 const getBarSize = (width: number) => {
-  if (width < 640) return 8; // Mobile
-  if (width < 1024) return 10; // Tablet
-  return 12; // Desktop
+  if (width < 640) return 8
+  if (width < 1024) return 10
+  return 12
 }
 
 const getGapSize = (width: number) => {
-  if (width < 640) return 1; // Mobile
-  if (width < 1024) return 1.5; // Tablet
-  return 2; // Desktop
+  if (width < 640) return 1
+  if (width < 1024) return 1.5
+  return 2
 }
 
 const AttendanceChart = () => {
+  const { t } = useTranslation()
+  const [windowWidth, setWindowWidth] = useState<number | null>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    const updateWindowWidth = () => setWindowWidth(window.innerWidth)
+    updateWindowWidth()
+    window.addEventListener('resize', updateWindowWidth)
+    return () => window.removeEventListener('resize', updateWindowWidth)
   }, [])
-
-  const transformedData = data.map(item => ({
-    day: item.day,
-    Present: item.Present,
-    Gap1: getGapSize(windowWidth),
-    Late: item.Late,
-    Gap2: getGapSize(windowWidth),
-    Absent: item.Absent,
-  }))
 
   useEffect(() => {
     const checkTheme = () => {
       const savedTheme = localStorage.getItem('theme')
-      const documentHasDarkClass = document.documentElement.classList.contains('dark')
-      setIsDarkMode(savedTheme === 'dark' || documentHasDarkClass)
+      const isDark = document.documentElement.classList.contains('dark')
+      setIsDarkMode(savedTheme === 'dark' || isDark)
     }
 
     checkTheme()
-
     const observer = new MutationObserver(checkTheme)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme') checkTheme()
@@ -77,7 +67,18 @@ const AttendanceChart = () => {
     }
   }, [])
 
+  if (windowWidth === null) return null
+
   const chartHeight = windowWidth < 640 ? 280 : windowWidth < 1024 ? 320 : 360
+
+  const transformedData = rawData.map(item => ({
+    day: t(`attendance.days.${item.day}`),
+    Present: item.Present,
+    Gap1: getGapSize(windowWidth),
+    Late: item.Late,
+    Gap2: getGapSize(windowWidth),
+    Absent: item.Absent,
+  }))
 
   return (
     <div
@@ -91,7 +92,7 @@ const AttendanceChart = () => {
             isDarkMode ? 'text-white' : 'text-gray-800'
           }`}
         >
-          Attendance Overview
+          {t('attendance.title')}
         </h3>
         <select
           className={`text-xs sm:text-sm border rounded px-2 py-1 sm:px-3 sm:py-1.5 w-full sm:w-auto transition-colors duration-200 ${
@@ -100,9 +101,9 @@ const AttendanceChart = () => {
               : 'bg-white border-gray-300 text-gray-700'
           }`}
         >
-          <option>Today</option>
-          <option>This Week</option>
-          <option>This Month</option>
+          <option>{t('attendance.today')}</option>
+          <option>{t('attendance.thisWeek')}</option>
+          <option>{t('attendance.thisMonth')}</option>
         </select>
       </div>
 
@@ -146,39 +147,11 @@ const AttendanceChart = () => {
             }}
             labelFormatter={(label) => `${label}`}
           />
-          <Bar
-            dataKey="Present"
-            stackId="a"
-            fill="#6366F1"
-            radius={[8, 8, 8, 8]}
-            barSize={getBarSize(windowWidth)}
-          />
-          <Bar
-            dataKey="Gap1"
-            stackId="a"
-            fill="transparent"
-            barSize={getBarSize(windowWidth)}
-          />
-          <Bar
-            dataKey="Late"
-            stackId="a"
-            fill="#FBBF24"
-            radius={[8, 8, 8, 8]}
-            barSize={getBarSize(windowWidth)}
-          />
-          <Bar
-            dataKey="Gap2"
-            stackId="a"
-            fill="transparent"
-            barSize={getBarSize(windowWidth)}
-          />
-          <Bar
-            dataKey="Absent"
-            stackId="a"
-            fill="#EF4444"
-            radius={[8, 8, 8, 8]}
-            barSize={getBarSize(windowWidth)}
-          />
+          <Bar dataKey="Present" stackId="a" fill="#6366F1" radius={[8, 8, 8, 8]} barSize={getBarSize(windowWidth)} />
+          <Bar dataKey="Gap1" stackId="a" fill="transparent" barSize={getBarSize(windowWidth)} />
+          <Bar dataKey="Late" stackId="a" fill="#FBBF24" radius={[8, 8, 8, 8]} barSize={getBarSize(windowWidth)} />
+          <Bar dataKey="Gap2" stackId="a" fill="transparent" barSize={getBarSize(windowWidth)} />
+          <Bar dataKey="Absent" stackId="a" fill="#EF4444" radius={[8, 8, 8, 8]} barSize={getBarSize(windowWidth)} />
         </BarChart>
       </ResponsiveContainer>
     </div>

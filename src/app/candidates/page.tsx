@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, Bell, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 
 const candidates = [
   {
@@ -88,6 +89,8 @@ const candidates = [
 ];
 
 export default function CandidateList() {
+  const { t } = useTranslation();
+
   const [search, setSearch] = useState('');
 
   const filteredCandidates = candidates.filter((c) =>
@@ -111,8 +114,8 @@ export default function CandidateList() {
     <div className="min-h-screen bg-white dark:bg-gray-900 p-6 text-gray-900 dark:text-white">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-xl font-semibold">Candidates</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Show All Candidates</p>
+          <h1 className="text-xl font-semibold">{t('candidates.title')}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('candidates.subtitle')}</p>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -122,12 +125,12 @@ export default function CandidateList() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search"
+              placeholder={t('search.placeholder')}
               className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
 
-          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label={t('notifications.title')}>
             <Bell className="h-5 w-5" />
           </button>
 
@@ -141,7 +144,7 @@ export default function CandidateList() {
             />
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">HR Manager</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('candidates.hrManager')}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
           </div>
@@ -153,21 +156,21 @@ export default function CandidateList() {
           <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300">
             <tr>
               <th className="px-4 py-3">
-                <input type="checkbox" className="h-4 w-4" />
+                <input type="checkbox" className="h-4 w-4" aria-label={t('candidates.selectAll')} />
               </th>
-              <th className="px-4 py-3 text-left">Candidate Name</th>
-              <th className="px-4 py-3 text-left">Applied For</th>
-              <th className="px-4 py-3 text-left">Applied Date</th>
-              <th className="px-4 py-3 text-left">Email Address</th>
-              <th className="px-4 py-3 text-left">Mobile Number</th>
-              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.name')}</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.appliedFor')}</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.appliedDate')}</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.email')}</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.phone')}</th>
+              <th className="px-4 py-3 text-left">{t('candidates.table.status')}</th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
             {filteredCandidates.map((c, idx) => (
               <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                 <td className="px-4 py-3">
-                  <input type="checkbox" className="h-4 w-4" />
+                  <input type="checkbox" className="h-4 w-4" aria-label={t('candidates.selectCandidate', { name: c.name })} />
                 </td>
                 <td className="px-4 py-3 flex items-center space-x-3">
                   <Image
@@ -185,7 +188,7 @@ export default function CandidateList() {
                 <td className="px-4 py-3">{c.phone}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full font-medium ${statusColor(c.status)}`}>
-                    {c.status}
+                    {t(`status.${c.status.replace(' ', '').toLowerCase()}`, c.status)}
                   </span>
                 </td>
               </tr>
@@ -196,20 +199,24 @@ export default function CandidateList() {
 
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
         <div className="flex items-center space-x-2">
-          <span>Showing</span>
-          <select className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 dark:text-white">
+          <span>{t('candidates.pagination.showing')}</span>
+          <select className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 dark:text-white" aria-label={t('candidates.pagination.rowsPerPage')}>
             <option>10</option>
             <option>20</option>
           </select>
-          <span>Showing 1 to 10 out of 60 records</span>
+          <span>{t('candidates.pagination.recordsInfo')}</span>
         </div>
-        <div className="flex items-center space-x-1">
-          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">{'<'}</button>
-          <button className="px-3 py-1 border rounded bg-purple-600 text-white">1</button>
-          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">2</button>
-          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">3</button>
-          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">4</button>
-          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">{'>'}</button>
+        <div className="flex items-center space-x-1" aria-label={t('candidates.pagination.navigation')}>
+          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" aria-label={t('candidates.pagination.previous')}>
+            {'<'}
+          </button>
+          <button className="px-3 py-1 border rounded bg-purple-600 text-white" aria-current="page">1</button>
+          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" aria-label={t('candidates.pagination.page', { page: 2 })}>2</button>
+          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" aria-label={t('candidates.pagination.page', { page: 3 })}>3</button>
+          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" aria-label={t('candidates.pagination.page', { page: 4 })}>4</button>
+          <button className="px-2 py-1 border rounded hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" aria-label={t('candidates.pagination.next')}>
+            {'>'}
+          </button>
         </div>
       </div>
     </div>

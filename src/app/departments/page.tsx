@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Bell, ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-
+import { useTranslation } from 'react-i18next';
 
 const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) => (
   <input
@@ -41,37 +41,37 @@ interface Departments {
 }
 
 const Index = () => {
-  
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
   const departments: Departments = {
-    'Design Department': [
-      { name: 'Dianne Russell', title: 'Lead UI/UX Designer', avatar: '' },
-      { name: 'Arlene McCoy', title: 'Sr UI/UX Designer', avatar: '' },
-      { name: 'Cody Fisher', title: 'Sr UI/UX Designer', avatar: '' },
-      { name: 'Theresa Webb', title: 'UI/UX Designer', avatar: '' },
-      { name: 'Ronald Richards', title: 'UI/UX Designer', avatar: '' },
+    [t('departments.design')]: [
+      { name: 'Dianne Russell', title: t('roles.leadUIUXDesigner'), avatar: '' },
+      { name: 'Arlene McCoy', title: t('roles.srUIUXDesigner'), avatar: '' },
+      { name: 'Cody Fisher', title: t('roles.srUIUXDesigner'), avatar: '' },
+      { name: 'Theresa Webb', title: t('roles.uiuxDesigner'), avatar: '' },
+      { name: 'Ronald Richards', title: t('roles.uiuxDesigner'), avatar: '' },
     ],
-    'Sales Department': [
-      { name: 'Darrell Steward', title: 'Sr Sales Manager', avatar: '' },
-      { name: 'Kristin Watson', title: 'Sr Sales Manager', avatar: '' },
-      { name: 'Courtney Henry', title: 'BDM', avatar: '' },
-      { name: 'Kathryn Murphy', title: 'BDE', avatar: '' },
-      { name: 'Albert Flores', title: 'Sales', avatar: '' },
+    [t('departments.sale')]: [
+      { name: 'Darrell Steward', title: t('roles.srSalesManager'), avatar: '' },
+      { name: 'Kristin Watson', title: t('roles.srSalesManager'), avatar: '' },
+      { name: 'Courtney Henry', title: t('roles.bdm'), avatar: '' },
+      { name: 'Kathryn Murphy', title: t('roles.bde'), avatar: '' },
+      { name: 'Albert Flores', title: t('roles.sales'), avatar: '' },
     ],
-    'Project Manager Department': [
-      { name: 'Leslie Alexander', title: 'Sr Project Manager', avatar: '' },
-      { name: 'Ronald Richards', title: 'Sr Project Manager', avatar: '' },
-      { name: 'Savannah Nguyen', title: 'Project Manager', avatar: '' },
-      { name: 'Eleanor Pena', title: 'Project Manager', avatar: '' },
-      { name: 'Esther Howard', title: 'Project Manager', avatar: '' },
+    [t('departments.projectManager')]: [
+      { name: 'Leslie Alexander', title: t('roles.srProjectManager'), avatar: '' },
+      { name: 'Ronald Richards', title: t('roles.srProjectManager'), avatar: '' },
+      { name: 'Savannah Nguyen', title: t('roles.projectManager'), avatar: '' },
+      { name: 'Eleanor Pena', title: t('roles.projectManager'), avatar: '' },
+      { name: 'Esther Howard', title: t('roles.projectManager'), avatar: '' },
     ],
-    'Marketing Department': [
-      { name: 'Wade Warren', title: 'Sr Marketing Manager', avatar: '' },
-      { name: 'Brooklyn Simmons', title: 'Sr Marketing Manager', avatar: '' },
-      { name: 'Kristin Watson', title: 'Marketing Coordinator', avatar: '' },
-      { name: 'Jacob Jones', title: 'Marketing Coordinator', avatar: '' },
-      { name: 'Cody Fisher', title: 'Marketing', avatar: '' },
+    [t('departments.marketing')]: [
+      { name: 'Wade Warren', title: t('roles.srMarketingManager'), avatar: '' },
+      { name: 'Brooklyn Simmons', title: t('roles.srMarketingManager'), avatar: '' },
+      { name: 'Kristin Watson', title: t('roles.marketingCoordinator'), avatar: '' },
+      { name: 'Jacob Jones', title: t('roles.marketingCoordinator'), avatar: '' },
+      { name: 'Cody Fisher', title: t('roles.marketing'), avatar: '' },
     ],
   };
 
@@ -99,21 +99,24 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">All Departments</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">All Departments Information</p>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('allDepartments.title')}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('allDepartments.subtitle')}</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search"
+                  placeholder={t('header.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-64"
                 />
               </div>
-              <Button className="text-gray-400 hover:text-gray-600 dark:hover:text-white border-0 p-2" title="notifications">
+              <Button
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white border-0 p-2"
+                title={t('notifications.title')}
+              >
                 <Bell className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
@@ -121,8 +124,8 @@ const Index = () => {
                   <AvatarFallback>RA</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">HR Manager</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{t('header.helloUser', { name: 'Robert Allen' })}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('role.hrManager')}</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-400" />
               </div>
@@ -137,7 +140,7 @@ const Index = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search"
+              placeholder={t('header.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full"
@@ -152,13 +155,13 @@ const Index = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{deptName}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{employees.length} Members</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{employees.length} {t('members')}</p>
                   </div>
                   <Link
                     href={`/departments/all`}
                     className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                   >
-                    View All
+                    {t('viewAllDepartments')}
                   </Link>
                 </div>
               </div>

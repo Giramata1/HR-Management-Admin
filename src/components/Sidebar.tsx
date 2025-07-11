@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   Users,
   RefreshCw,
@@ -17,29 +18,58 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const menuItems = [
-  { icon: LayoutGrid, label: 'Dashboard', href: '/' },
-  { icon: Users, label: 'All Employees', href: '/employees' },
-  { icon: RefreshCw, label: 'All Departments', href: '/departments' },
-  { icon: CalendarCheck, label: 'Attendance', href: '/attendance' },
-  { icon: CircleDollarSign, label: 'Payroll', href: '/payroll' },
-  { icon: BriefcaseBusiness, label: 'Jobs', href: '/jobs' },
-  { icon: UsersRound, label: 'Candidates', href: '/candidates' },
-  { icon: ClipboardList, label: 'Leaves', href: '/leaves' },
-  { icon: NotepadText, label: 'Holidays', href: '/holidays' },
-  { icon: Settings, label: 'Settings', href: '/settings' },
+  { icon: LayoutGrid, labelKey: 'sidebar.dashboard', href: '/' },
+  { icon: Users, labelKey: 'sidebar.allEmployees', href: '/employees' },
+  { icon: RefreshCw, labelKey: 'sidebar.allDepartments', href: '/departments' },
+  { icon: CalendarCheck, labelKey: 'sidebar.attendance', href: '/attendance' },
+  { icon: CircleDollarSign, labelKey: 'sidebar.payroll', href: '/payroll' },
+  { icon: BriefcaseBusiness, labelKey: 'sidebar.jobs', href: '/jobs' },
+  { icon: UsersRound, labelKey: 'sidebar.candidates', href: '/candidates' },
+  { icon: ClipboardList, labelKey: 'sidebar.leaves', href: '/leaves' },
+  { icon: NotepadText, labelKey: 'sidebar.holidays', href: '/holidays' },
+  { icon: Settings, labelKey: 'sidebar.settings', href: '/settings' },
 ];
 
 const Sidebar = () => {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { t, ready } = useTranslation();
 
-  const isDarkMode =
-    theme === 'dark' ||
-    (theme === 'auto' &&
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // Local state to store dark mode to avoid mismatch between SSR and client
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Default dark mode on server: false (light)
+    if (typeof window === 'undefined') return false;
+
+    // On client, initial guess based on theme or system preference
+    if (theme === 'dark') return true;
+    if (theme === 'auto') return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (theme === 'dark') {
+      setIsDarkMode(true);
+    } else if (theme === 'auto') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setIsDarkMode(mediaQuery.matches);
+
+      const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    } else {
+      setIsDarkMode(false);
+    }
+  }, [theme]);
+
+  if (!ready) {
+    // Don't render until i18n is ready to avoid hydration mismatch
+    return null;
+  }
 
   return (
     <aside
@@ -68,12 +98,12 @@ const Sidebar = () => {
 
       <nav className="flex-1 p-4">
         <ul className="space-y-1">
-          {menuItems.map((item, index) => {
-            const isActive = pathname === item.href;
+          {menuItems.map(({ icon: Icon, labelKey, href }, index) => {
+            const isActive = pathname === href;
 
             return (
               <li key={index}>
-                <Link href={item.href}>
+                <Link href={href}>
                   <div
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                       isActive
@@ -83,8 +113,9 @@ const Sidebar = () => {
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <item.icon size={20} className="mr-3" />
-                    {item.label}
+                    <Icon size={20} className="mr-3" />
+                    {/* translate label inline */}
+                    <span suppressHydrationWarning>{t(labelKey)}</span>
                   </div>
                 </Link>
               </li>
@@ -93,7 +124,6 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-     
       <div
         className={`p-4 border-t transition-colors duration-200 ${
           isDarkMode ? 'border-gray-700' : 'border-gray-200'
@@ -113,7 +143,9 @@ const Sidebar = () => {
             }`}
           >
             <Sun size={16} />
-            <span className="text-sm font-medium">Light</span>
+            <span suppressHydrationWarning className="text-sm font-medium">
+              {t('sidebar.light')}
+            </span>
           </button>
 
           <button
@@ -125,7 +157,9 @@ const Sidebar = () => {
             }`}
           >
             <Moon size={16} />
-            <span className="text-sm font-medium">Dark</span>
+            <span suppressHydrationWarning className="text-sm font-medium">
+              {t('sidebar.dark')}
+            </span>
           </button>
         </div>
       </div>

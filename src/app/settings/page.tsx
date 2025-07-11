@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Bell, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface ToggleProps {
   enabled: boolean;
@@ -12,18 +13,48 @@ interface ToggleProps {
 
 interface DropdownProps {
   value: string;
-  options: string[];
+  options: { label: string; value: string }[];
   onChange: (value: string) => void;
 }
 
 const Settings = () => {
   const { theme, setTheme } = useTheme();
-  const [language, setLanguage] = useState('English');
+  const { t, i18n } = useTranslation();
+
+  const [language, setLanguage] = useState(i18n.language);
   const [twoFactor, setTwoFactor] = useState(true);
   const [mobilePush, setMobilePush] = useState(true);
   const [desktopNotification, setDesktopNotification] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // New: Track if i18n is ready (prevents hydration mismatch)
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (i18n.isInitialized) {
+      setReady(true);
+    } else {
+      const handleInitialized = () => setReady(true);
+      i18n.on('initialized', handleInitialized);
+
+      // Clean up event listener on unmount
+      return () => {
+        i18n.off('initialized', handleInitialized);
+      };
+    }
+  }, [i18n]);
+
+  const languageOptions = [
+    { label: 'English', value: 'en' },
+    { label: 'Français', value: 'fr' },
+  ];
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    i18n.changeLanguage(value);
+    localStorage.setItem('i18nextLng', value);
+  };
 
   const Toggle = ({ enabled, onToggle }: ToggleProps) => (
     <div
@@ -47,9 +78,9 @@ const Settings = () => {
         onChange={(e) => onChange(e.target.value)}
         className="appearance-none bg-white dark:bg-gray-800 dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        {options.map((option: string) => (
-          <option key={option} value={option}>
-            {option.charAt(0).toUpperCase() + option.slice(1)}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -57,13 +88,20 @@ const Settings = () => {
     </div>
   );
 
+  if (!ready) {
+    // While i18n isn't ready, render nothing to avoid hydration mismatch
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Settings</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">All System Settings</p>
+            <h1 className="text-2xl font-semibold">{t('settings.title')}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {t('settings.subtitle')}
+            </p>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -71,7 +109,7 @@ const Settings = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder={t('search.placeholder')}
                 className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -87,14 +125,12 @@ const Settings = () => {
 
               {showNotifications && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowNotifications(false)}
-                  ></div>
-
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
                   <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="font-medium text-gray-900 dark:text-white">Notifications</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {t('notifications.title')}
+                      </h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 cursor-pointer">
@@ -103,11 +139,11 @@ const Settings = () => {
                             <Bell className="h-4 w-4 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">New Settings Available</p>
+                            <p className="text-sm font-medium">{t('notifications.newSettings')}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Check out the new security settings
+                              {t('notifications.checkSecurity')}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">5 minutes ago</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('notifications.timeAgo')}</p>
                           </div>
                         </div>
                       </div>
@@ -117,7 +153,7 @@ const Settings = () => {
                         className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium py-2 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
                         onClick={() => setShowNotifications(false)}
                       >
-                        View All Notifications
+                        {t('notifications.viewAll')}
                       </button>
                     </div>
                   </div>
@@ -135,7 +171,7 @@ const Settings = () => {
               />
               <div className="text-sm">
                 <div className="font-medium">Robert Allen</div>
-                <div className="text-gray-500 dark:text-gray-400">HR Manager</div>
+                <div className="text-gray-500 dark:text-gray-400">{t('role.hrManager')}</div>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </div>
@@ -146,64 +182,54 @@ const Settings = () => {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-
-           
             <div className="p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Appearance</h3>
+                <h3 className="text-lg font-medium">{t('appearance.title')}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Select your preferred theme
+                  {t('appearance.description')}
                 </p>
               </div>
               <Dropdown
                 value={theme}
-                options={['light', 'dark', 'auto']}
+                options={[
+                  { label: 'Light', value: 'light' },
+                  { label: 'Dark', value: 'dark' },
+                  { label: 'Auto', value: 'auto' },
+                ]}
                 onChange={(value) => setTheme(value as 'light' | 'dark' | 'auto')}
               />
             </div>
 
-        
             <div className="p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Language</h3>
+                <h3 className="text-lg font-medium">{t('language.title')}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Select your language
+                  {t('language.description')}
                 </p>
               </div>
-              <Dropdown
-                value={language}
-                options={['English', 'Spanish', 'French', 'German', 'Chinese']}
-                onChange={setLanguage}
-              />
+              <Dropdown value={language} options={languageOptions} onChange={handleLanguageChange} />
             </div>
 
-           
             <div className="p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Two-factor Authentication</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Keep your account secure by enabling 2FA via mail
-                </p>
+                <h3 className="text-lg font-medium">{t('twoFactor.title')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('twoFactor.description')}</p>
               </div>
               <Toggle enabled={twoFactor} onToggle={() => setTwoFactor(!twoFactor)} />
             </div>
 
             <div className="p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Mobile Push Notifications</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive push notifications on mobile
-                </p>
+                <h3 className="text-lg font-medium">{t('mobilePush.title')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('mobilePush.description')}</p>
               </div>
               <Toggle enabled={mobilePush} onToggle={() => setMobilePush(!mobilePush)} />
             </div>
 
             <div className="p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium">Desktop Notification</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive push notifications on desktop
-                </p>
+                <h3 className="text-lg font-medium">{t('desktopNotification.title')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('desktopNotification.description')}</p>
               </div>
               <Toggle
                 enabled={desktopNotification}
@@ -213,10 +239,8 @@ const Settings = () => {
 
             <div className="p-6 flex items-center justify-between border-b-0">
               <div>
-                <h3 className="text-lg font-medium">Email Notifications</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Receive email updates
-                </p>
+                <h3 className="text-lg font-medium">{t('emailNotifications.title')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('emailNotifications.description')}</p>
               </div>
               <Toggle
                 enabled={emailNotifications}
