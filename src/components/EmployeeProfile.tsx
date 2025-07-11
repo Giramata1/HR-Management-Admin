@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   UserRound,
   CalendarCheck,
@@ -71,10 +72,9 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
   const [activeTab, setActiveTab] = useState('personal');
   const [activeSection, setActiveSection] = useState('profile');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [emailAddress, setEmailAddress] = useState(employee.professionalInfo.emailAddress);
-  const [slackId, setSlackId] = useState('');
-  const [skypeId, setSkypeId] = useState('');
-  const [githubId, setGithubId] = useState('');
+  const [emailAddress] = useState(employee.professionalInfo.emailAddress);
+  const [githubId] = useState('');
+  const router = useRouter();
 
   const { name, designation, avatar, personalInfo, professionalInfo } = employee;
 
@@ -147,18 +147,20 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
     inactiveSection: isDarkMode ? 'text-gray-400 hover:text-violet-400' : 'text-gray-500 hover:text-violet-600',
   };
 
-  const handleSave = () => {
-    console.log('Saving:', { emailAddress, slackId, skypeId, githubId });
-    // Add save logic here
+  
+  const handleAllEmployeesClick = () => {
+    router.push('/employees');
   };
-
   return (
     <div className={`${themeClasses.bg} rounded-xl shadow-sm max-w-7xl mx-auto p-6 space-y-6 min-h-screen transition-colors duration-200`}>
       <div className="flex justify-between items-center flex-wrap">
         <div>
           <h2 className={`text-lg font-semibold ${themeClasses.text}`}>{name}</h2>
           <nav className={`text-sm ${themeClasses.textMuted}`}>
-            All Employees  <span className={`${themeClasses.text} font-medium`}>{name}</span>
+            <button onClick={handleAllEmployeesClick} className={`hover:text-violet-600 ${themeClasses.textMuted}`}>
+              All Employees
+            </button>{' '}
+            <span className={`${themeClasses.text} font-medium`}>{name}</span>
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -201,7 +203,7 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
             <p className={`text-sm ${themeClasses.textSecondary}`}>{personalInfo.email}</p>
           </div>
         </div>
-        <button className="bg-violet-600 text-white px-4 py-2 rounded-md text-sm hover:bg-violet-500 flex items-center gap-2">
+        <button className="bg-violet-600 text-white px-4 py-2 rounded-md text-sm hover:bg-violet-merged-md-5 flex items-center gap-2">
           <PencilLine className="w-4 h-4" /> Edit Profile
         </button>
       </div>
@@ -377,7 +379,7 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
                       <button className={`ml-auto text-violet-600 hover:text-violet-500`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542-7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </button>
                       <button className={`text-green-600 hover:text-green-500`}>
@@ -393,55 +395,23 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
               {activeTab === 'account' && (
                 <div className={`p-6 ${themeClasses.cardBg} ${themeClasses.border} rounded-lg`}>
                   <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Account Access</h3>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className={themeClasses.textMuted}>Email Address</label>
-                        <input
-                          type="email"
-                          value={emailAddress}
-                          onChange={(e) => setEmailAddress(e.target.value)}
-                          className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
-                          placeholder="Enter email address"
-                        />
-                      </div>
-                      <div>
-                        <label className={themeClasses.textMuted}>Slack ID</label>
-                        <input
-                          type="text"
-                          value={slackId}
-                          onChange={(e) => setSlackId(e.target.value)}
-                          className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
-                          placeholder="Enter Slack ID"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-6 text-sm">
+                    <div>
+                      <label className={`block mb-1 font-medium ${themeClasses.textMuted}`}>Email Address</label>
+                      <p className={`p-2 rounded-md border ${themeClasses.input}`}>{emailAddress}</p>
                     </div>
                     <div>
-                      <label className={themeClasses.textMuted}>Skype ID</label>
-                      <input
-                        type="text"
-                        value={skypeId}
-                        onChange={(e) => setSkypeId(e.target.value)}
-                        className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
-                        placeholder="Enter Skype ID"
-                      />
+                      <label className={`block mb-1 font-medium ${themeClasses.textMuted}`}>Bank Account Number</label>
+                      <p className={`p-2 rounded-md border ${themeClasses.input}`}>**** **** **** 2345</p>
                     </div>
                     <div>
-                      <label className={themeClasses.textMuted}>GitHub ID</label>
-                      <input
-                        type="text"
-                        value={githubId}
-                        onChange={(e) => setGithubId(e.target.value)}
-                        className={`w-full mt-1 p-2 ${themeClasses.input} rounded-md`}
-                        placeholder="Enter GitHub ID"
-                      />
+                      <label className={`block mb-1 font-medium ${themeClasses.textMuted}`}>GitHub ID</label>
+                      <p className={`p-2 rounded-md border ${themeClasses.input}`}>{githubId || 'not-connected'}</p>
                     </div>
-                    <button
-                      onClick={handleSave}
-                      className="w-full bg-violet-600 text-white py-2 rounded-md hover:bg-violet-500 transition-colors"
-                    >
-                      Save Changes
-                    </button>
+                    <div>
+                      <label className={`block mb-1 font-medium ${themeClasses.textMuted}`}>LinkedIn</label>
+                      <p className={`p-2 rounded-md border ${themeClasses.input}`}>linkedin.com/in/robert-allen</p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -547,9 +517,65 @@ const EmployeeProfile = ({ employee }: EmployeeProfileProps) => {
           )}
 
           {activeSection === 'leave' && (
-            <div className={`text-center py-12 ${themeClasses.textMuted}`}>
-              <Leaf className={`w-12 h-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-              <p>Leave section content will be displayed here.</p>
+            <div className={`${themeClasses.cardBg} border ${themeClasses.border} rounded-lg overflow-hidden`}>
+              <div className="overflow-x-auto">
+                <table className={`w-full text-sm ${themeClasses.text}`}>
+                  <thead className={`${themeClasses.tableBg} border-b ${themeClasses.borderB}`}>
+                    <tr>
+                      <th className="text-left p-4 font-medium">Leave Type</th>
+                      <th className="text-left p-4 font-medium">From</th>
+                      <th className="text-left p-4 font-medium">To</th>
+                      <th className="text-left p-4 font-medium">Days</th>
+                      <th className="text-left p-4 font-medium">Reason</th>
+                      <th className="text-left p-4 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${themeClasses.border}`}>
+                    {[
+                      {
+                        id: 1,
+                        type: 'Casual Leave',
+                        from: '2025-07-01',
+                        to: '2025-07-02',
+                        days: 2,
+                        reason: 'Family event',
+                        status: 'Approved',
+                      },
+                      {
+                        id: 2,
+                        type: 'Sick Leave',
+                        from: '2025-07-05',
+                        to: '2025-07-07',
+                        days: 3,
+                        reason: 'Fever and rest',
+                        status: 'Pending',
+                      },
+                      {
+                        id: 3,
+                        type: 'Annual Leave',
+                        from: '2025-08-01',
+                        to: '2025-08-10',
+                        days: 10,
+                        reason: 'Vacation',
+                        status: 'Rejected',
+                      },
+                    ].map((leave) => (
+                      <tr key={leave.id} className={themeClasses.hover}>
+                        <td className="p-4">{leave.type}</td>
+                        <td className="p-4">{leave.from}</td>
+                        <td className="p-4">{leave.to}</td>
+                        <td className="p-4">{leave.days}</td>
+                        <td className="p-4">{leave.reason}</td>
+                        <td className="p-4">
+                          <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(leave.status)}`}>
+                            {leave.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

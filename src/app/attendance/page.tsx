@@ -1,8 +1,8 @@
 'use client';
 
-
 import { Search, Bell, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Employee {
   name: string;
@@ -13,13 +13,6 @@ interface Employee {
 }
 
 const employees: Employee[] = [
-  { name: 'Leasie Watson', title: 'Team Lead - Design', type: 'Office', time: '09:27 AM', status: 'On Time' },
-  { name: 'Darlene Robertson', title: 'Web Designer', type: 'Office', time: '09:15 AM', status: 'Late' },
-  { name: 'Jacob Jones', title: 'Medical Assistant', type: 'Remote', time: '09:24 AM', status: 'Late' },
-  { name: 'Kathryn Murphy', title: 'Marketing Coordinator', type: 'Office', time: '09:10 AM', status: 'On Time' },
-  { name: 'Leslie Alexander', title: 'Data Analyst', type: 'Office', time: '09:15 AM', status: 'On Time' },
-  { name: 'Ronald Richards', title: 'Phyton Developer', type: 'Remote', time: '09:29 AM', status: 'On Time' },
-  { name: 'Guy Hawkins', title: 'UI/UX Design', type: 'Remote', time: '09:29 AM', status: 'On Time' },
   { name: 'Albert Flores', title: 'React JS', type: 'Remote', time: '09:29 AM', status: 'On Time' },
   { name: 'Savannah Nguyen', title: 'IOS Developer', type: 'Remote', time: '10:50 AM', status: 'Late' },
   { name: 'Jenny Wilson', title: 'React JS Developer', type: 'Remote', time: '11:30 AM', status: 'Late' },
@@ -33,121 +26,210 @@ const getInitials = (name: string) =>
     .toUpperCase();
 
 export default function AttendancePage() {
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const filtered = employees.filter((e) =>
-    e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.title.toLowerCase().includes(search.toLowerCase())
+  // Ensure language is set client-side to match user preference
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('i18nextLng') || 'en';
+    if (i18n.language !== savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n]);
+
+  const filtered = employees.filter(
+    (e) =>
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      e.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEmployees = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  // Status mapping to match translation keys
+  const statusMap: Record<string, string> = {
+    'On Time': 'onTime',
+    'Late': 'late',
+  };
+
   return (
-    <div className="min-h-screen text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-xl font-bold">Attendance</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">All Employee Attendance</p>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{t('attendance.title')}</h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{t('attendanceTable.title')}</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-48 md:w-64">
             <Search className="absolute top-2.5 left-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder={t('search.placeholder') || 'Search'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-md text-sm w-72 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              className="pl-10 pr-4 py-2 border rounded-md text-sm w-full bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
           </div>
 
-          <button className="p-2 rounded-full border border-gray-200 dark:border-gray-700">
-            <Bell className="h-5 w-5 text-gray-500 dark:text-gray-300" />
+          <button
+            className="p-2 rounded-full border border-gray-200 dark:border-gray-700"
+            aria-label={t('notifications.title')}
+          >
+            <Bell className="h-4 sm:h-5 w-4 sm:w-5 text-gray-500 dark:text-gray-300" />
           </button>
 
-          <div className="flex items-center gap-2 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-semibold text-gray-700 dark:text-white">
+          <div className="flex items-center gap-2 border border-gray-200 dark:border-gray-700 rounded-lg px-2 sm:px-3 py-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-semibold text-gray-700 dark:text-white">
               RA
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium">Robert Allen</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">HR Manager</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('role.hrManager')}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400" />
           </div>
         </div>
       </div>
 
+      {/* Body */}
       <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm">
         <div className="p-4 border-b dark:border-gray-700">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-full sm:max-w-sm">
             <Search className="absolute top-2.5 left-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder={t('search.placeholder') || 'Search'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
           </div>
         </div>
 
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[640px] w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">Employee Name</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">Designation</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">Type</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">Check In Time</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">Status</th>
+                <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">
+                  {t('attendanceTable.name')}
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">
+                  {t('attendanceTable.designation')}
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">
+                  {t('attendanceTable.type')}
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">
+                  {t('attendanceTable.checkIn')}
+                </th>
+                <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-300">
+                  {t('attendanceTable.status')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filtered.map((emp, i) => (
-                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-3 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-semibold text-gray-700 dark:text-white">
-                      {getInitials(emp.name)}
-                    </div>
-                    {emp.name}
-                  </td>
-                  <td className="px-6 py-3">{emp.title}</td>
-                  <td className="px-6 py-3">{emp.type}</td>
-                  <td className="px-6 py-3">{emp.time}</td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                        emp.status === 'On Time'
-                          ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
-                          : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'
-                      }`}
-                    >
-                      {emp.status}
-                    </span>
+              {paginatedEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {t('attendanceTable.noRecords')}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedEmployees.map((emp, i) => {
+                  const roleKey = emp.title.toLowerCase().replace(/ /g, '').replace(/\//g, '');
+                  return (
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-4 sm:px-6 py-3 flex items-center gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-semibold text-gray-700 dark:text-white">
+                          {getInitials(emp.name)}
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white">{emp.name}</span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-900 dark:text-white">
+                        {t(`roles.${roleKey}`) || emp.title}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-900 dark:text-white">
+                        {t(`employees.types.${emp.type.toLowerCase()}`) || emp.type}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-900 dark:text-white">
+                        {emp.time}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3">
+                        <span
+                          className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                            emp.status === 'On Time'
+                              ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'
+                          }`}
+                        >
+                          {t(`attendanceTable.${statusMap[emp.status]}`) || emp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
 
-        <div className="flex justify-between items-center px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+        {/* Pagination */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 gap-4 sm:gap-0">
           <div className="flex items-center gap-2">
-            <span>Showing</span>
-            <select className="border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-              <option>10</option>
-              <option>20</option>
-              <option>50</option>
+            <span>{t('attendanceTable.showing') || 'Showing'}</span>
+            <select
+              className="border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+              onChange={(e) => {
+                const newItemsPerPage = parseInt(e.target.value);
+                setItemsPerPage(newItemsPerPage);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
             </select>
           </div>
-          <p>Showing 1 to 10 out of 60 records</p>
-          <div className="flex items-center gap-1">
-            <button className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">&lt;</button>
-            <button className="px-2 py-1 rounded bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">1</button>
-            <button className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">2</button>
-            <button className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">3</button>
-            <button className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">4</button>
-            <button className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">&gt;</button>
+          <p>
+            {t('employees.showing', {
+              count: paginatedEmployees.length,
+              total: filtered.length,
+            }) || `Showing ${startIndex + 1} to ${Math.min(startIndex + itemsPerPage, filtered.length)} out of ${filtered.length} results`}
+          </p>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              {'<'}
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                className={`px-2 py-1 rounded ${
+                  currentPage === i + 1
+                    ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              {'>'}
+            </button>
           </div>
         </div>
       </div>

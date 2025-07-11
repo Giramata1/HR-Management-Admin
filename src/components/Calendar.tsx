@@ -14,6 +14,8 @@ import {
   isSameMonth,
   isSameDay,
 } from 'date-fns'
+import { enUS, fr } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 
 interface ScheduleItem {
   time: string
@@ -34,11 +36,17 @@ const scheduleData: Record<string, ScheduleItem[]> = {
 }
 
 export default function ScheduleCalendar() {
+  const { t, i18n } = useTranslation()
+
   const [currentMonth, setCurrentMonth] = useState(new Date(2023, 6))
   const [selectedDate, setSelectedDate] = useState(new Date(2023, 6, 6))
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
+  // Wait until client side to render, to avoid hydration mismatch
   useEffect(() => {
+    setMounted(true)
+
     const checkTheme = () => {
       const savedTheme = localStorage.getItem('theme')
       const hasDark = document.documentElement.classList.contains('dark')
@@ -64,6 +72,12 @@ export default function ScheduleCalendar() {
     }
   }, [])
 
+  if (!mounted) {
+    return null // or loading spinner placeholder
+  }
+
+  const locale = i18n.language === 'fr' ? fr : enUS
+
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
   const startDate = startOfWeek(monthStart)
@@ -80,7 +94,7 @@ export default function ScheduleCalendar() {
   }
 
   const scheduledDates = getScheduledDates()
-  const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+  const dayHeaders = t('schedule.dayHeaders', { returnObjects: true }) as string[]
 
   return (
     <div className={`rounded-2xl shadow-sm mx-auto overflow-hidden transition-colors duration-200 w-full max-w-4xl
@@ -89,7 +103,7 @@ export default function ScheduleCalendar() {
       {/* Header */}
       <div className="flex justify-between items-center p-4 sm:p-6 md:p-8">
         <h2 className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          My Schedule
+          {t('schedule.title')}
         </h2>
         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center 
           ${isDarkMode ? 'bg-purple-900/20' : 'bg-purple-100'}`}>
@@ -104,7 +118,7 @@ export default function ScheduleCalendar() {
           className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-600 rounded-xl text-white hover:bg-purple-700"
         >←</button>
         <h3 className={`text-lg sm:text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          {format(currentMonth, 'MMMM, yyyy')}
+          {format(currentMonth, 'MMMM, yyyy', { locale })}
         </h3>
         <button
           onClick={handleNextMonth}
@@ -148,7 +162,7 @@ export default function ScheduleCalendar() {
                   : 'text-gray-300'
                 }`}
             >
-              {format(day, 'd')}
+              {format(day, 'd', { locale })}
             </button>
           )
         })}
@@ -164,7 +178,7 @@ export default function ScheduleCalendar() {
             <div key={dateKey} className="mb-6 last:mb-0">
               <div className="flex justify-between items-center mb-4">
                 <div className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                  {format(scheduleDate, 'EEEE, dd MMMM yyyy')}
+                  {format(scheduleDate, 'EEEE, dd MMMM yyyy', { locale })}
                 </div>
                 <MoreVertical className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
               </div>
@@ -182,10 +196,10 @@ export default function ScheduleCalendar() {
                     </div>
                     <div className="flex-1 pb-3">
                       <div className={`text-xs sm:text-sm mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {item.role}
+                        {t(`schedule.roles.${item.role}`, item.role)}
                       </div>
                       <div className={`text-sm sm:text-base font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                        {item.task}
+                        {t(`schedule.tasks.${item.task}`, item.task)}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
+'use client';
 
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type ProfessionalFormData = {
   employeeID: string;
@@ -32,6 +33,16 @@ export default function ProfessionalForm({
   onCancel,
   onNext,
 }: Props) {
+  const { t, i18n } = useTranslation();
+
+  // Debug locale and translation changes
+  useEffect(() => {
+    console.log('Current locale:', i18n.language);
+    console.log('Designation translation:', t('attendanceTable.designation')); // Debug designation
+    console.log('Cancel translation:', t('addEmployee.buttons.cancel'));
+    console.log('Next translation:', t('addEmployee.buttons.next'));
+  }, [i18n.language, t]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext?.();
@@ -51,7 +62,7 @@ export default function ProfessionalForm({
           name="employeeID"
           value={formData.employeeID}
           onChange={handleChange}
-          placeholder="Employee ID"
+          placeholder={t('employees.table.employeeID', { defaultValue: 'Employee ID' })}
           className={inputClass}
           required
         />
@@ -61,7 +72,7 @@ export default function ProfessionalForm({
           name="userName"
           value={formData.userName}
           onChange={handleChange}
-          placeholder="User Name"
+          placeholder={t('userName', { defaultValue: 'Username' })}
           className={inputClass}
           required
         />
@@ -73,10 +84,10 @@ export default function ProfessionalForm({
           className={selectClass}
           required
         >
-          <option value="">Select Employee Type</option>
+          <option value="">{t('selectEmployeeType', { defaultValue: 'Select Employee Type' })}</option>
           {employeeTypes.map((type) => (
             <option key={type} value={type.toLowerCase()}>
-              {type}
+              {t(`type.${type}`, { defaultValue: type })}
             </option>
           ))}
         </select>
@@ -86,7 +97,7 @@ export default function ProfessionalForm({
           name="emailAddress"
           value={formData.emailAddress}
           onChange={handleChange}
-          placeholder="Email Address"
+          placeholder={t('emailAddress', { defaultValue: 'Email Address' })}
           className={inputClass}
           required
         />
@@ -98,10 +109,10 @@ export default function ProfessionalForm({
           className={selectClass}
           required
         >
-          <option value="">Select Department</option>
+          <option value="">{t('selectDepartment', { defaultValue: 'Select Department' })}</option>
           {departments.map((dept) => (
             <option key={dept} value={dept.toLowerCase()}>
-              {dept}
+              {t(`employees.departments.${dept}`, { defaultValue: dept })}
             </option>
           ))}
         </select>
@@ -111,7 +122,7 @@ export default function ProfessionalForm({
           name="designation"
           value={formData.designation}
           onChange={handleChange}
-          placeholder="Enter Designation"
+          placeholder={t('attendanceTable.designation', { defaultValue: 'Designation' })}
           className={inputClass}
           required
         />
@@ -121,7 +132,7 @@ export default function ProfessionalForm({
           name="joiningDate"
           value={formData.joiningDate}
           onChange={handleChange}
-          placeholder="Select Joining Date"
+          placeholder={t('joiningDate', { defaultValue: 'Joining Date' })}
           className={inputClass}
           required
         />
@@ -134,10 +145,10 @@ export default function ProfessionalForm({
             className={selectClass}
             required
           >
-            <option value="">Select Office Location</option>
+            <option value="">{t('selectOfficeLocation', { defaultValue: 'Select Office Location' })}</option>
             {officeLocations.map((loc) => (
               <option key={loc} value={loc.toLowerCase()}>
-                {loc}
+                {t(loc, { defaultValue: loc })}
               </option>
             ))}
           </select>
@@ -151,7 +162,7 @@ export default function ProfessionalForm({
             onClick={onCancel}
             className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Cancel
+            {t('addEmployee.buttons.cancel', { defaultValue: 'Cancel' })}
           </button>
         )}
         {onNext && (
@@ -159,7 +170,7 @@ export default function ProfessionalForm({
             type="submit"
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
-            Next
+            {t('addEmployee.buttons.next', { defaultValue: 'Next' })}
           </button>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { UploadCloud } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   docTitles: string[];
@@ -18,6 +19,8 @@ export default function DocumentUpload({
   handleDocUpload,
   triggerDocInput
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -35,23 +38,28 @@ export default function DocumentUpload({
               </span>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Drag & Drop or <span className="text-purple-600 dark:text-purple-400 underline">choose file</span> to upload
+                {t('documentUpload.dragDrop')}{' '}
+                <span className="text-purple-600 dark:text-purple-400 underline">
+                  {t('documentUpload.chooseFile')}
+                </span>{' '}
+                {t('documentUpload.toUpload')}
               </p>
             )}
             <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-              Supported formats: .jpeg, .pdf
+              {t('documentUpload.supportedFormats')}
             </p>
           </div>
         ))}
       </div>
 
-     
       {docTitles.map((_, index) => (
         <input
           key={`input-${index}`}
           type="file"
           accept=".jpg,.jpeg,.pdf"
-          ref={(el) => { docInputRefs.current[index] = el; }}
+          ref={(el) => {
+            docInputRefs.current[index] = el;
+          }}
           onChange={handleDocUpload(index)}
           className="hidden"
         />

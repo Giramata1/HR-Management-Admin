@@ -1,0 +1,397 @@
+{
+  "settings": {
+    "title": "Settings",
+    "subtitle": "All System Settings"
+  },
+  "search": {
+    "placeholder": "Search"
+  },
+  "notifications": {
+    "title": "Notifications"
+  },
+  "role": {
+    "hrManager": "HR Manager"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "description": "Select your preferred theme"
+  },
+  "language": {
+    "title": "Language",
+    "description": "Select your language"
+  },
+  "twoFactor": {
+    "title": "Two-factor Authentication",
+    "description": "Keep your account secure by enabling 2FA via mail"
+  },
+  "mobilePush": {
+    "title": "Mobile Push Notifications",
+    "description": "Receive push notifications on mobile"
+  },
+  "desktopNotification": {
+    "title": "Desktop Notification",
+    "description": "Receive push notifications on desktop"
+  },
+  "emailNotifications": {
+    "title": "Email Notifications",
+    "description": "Receive email updates"
+  },
+  "attendance": {
+    "title": "Attendance Overview",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "days": {
+      "Mon": "Mon",
+      "Tue": "Tue",
+      "Wed": "Wed",
+      "Thu": "Thu",
+      "Fri": "Fri",
+      "Sat": "Sat",
+      "Sun": "Sun"
+    }
+  },
+  "attendanceTable": {
+    "title": "Attendance Overview",
+    "viewAll": "View All",
+    "name": "Employee Name",
+    "designation": "Designation",
+    "type": "Type",
+    "checkIn": "Check In Time",
+    "status": "Status",
+    "onTime": "On Time",
+    "late": "Late",
+    "noRecords": "No attendance records found."
+  },
+  "schedule": {
+    "title": "My Schedule",
+    "roles": {
+      "UI/UX Designer": "UI/UX Designer",
+      "Magento Developer": "Magento Developer",
+      "Sales Manager": "Sales Manager",
+      "Front end Developer": "Front end Developer",
+      "React JS": "React JS"
+    },
+    "tasks": {
+      "Practical Task Review": "Practical Task Review",
+      "Resume Review": "Resume Review",
+      "Final HR Round": "Final HR Round",
+      "TL Meeting": "TL Meeting"
+    },
+    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+  },
+  "dashboard": {
+    "totalEmployee": "Total Employee",
+    "totalApplicant": "Total Applicant",
+    "todayAttendance": "Today Attendance",
+    "totalProjects": "Total Projects",
+    "updateDate": "Update: {{date}}"
+  },
+  "header": {
+    "helloUser": "Hello {{name}}",
+    "goodMorning": "Good Morning",
+    "goodAfternoon": "Good Afternoon",
+    "goodEvening": "Good Evening",
+    "searchPlaceholder": "Search...",
+    "profileAlt": "{{name}}'s profile picture",
+    "hrManager": "HR Manager",
+    "myProfile": "My Profile",
+    "logout": "Logout"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "allEmployees": "All Employees",
+    "allDepartments": "All Departments",
+    "attendance": "Attendance",
+    "payroll": "Payroll",
+    "jobs": "Jobs",
+    "candidates": "Candidates",
+    "leaves": "Leaves",
+    "holidays": "Holidays",
+    "settings": "Settings",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "employees": {
+    "addNew": "Add New Employee",
+    "filter": "Filter",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "noEmployees": "No employees found. Click \"Add New Employee\".",
+    "showing": "Showing {{count}} of {{total}} results",
+    "id": "ID",
+    "actionsLabel": "Actions",
+    "type": "Type",
+    "departments": {
+      "Design": "Design",
+      "Java": "Java",
+      "Python": "Python",
+      "React JS": "React JS",
+      "HR": "HR",
+      "Sales": "Sales",
+      "Business Analyst": "Business Analyst",
+      "Project Manager": "Project Manager",
+      "Account": "Account",
+      "Node JS": "Node JS"
+    },
+    "types": {
+      "office": "Office",
+      "workFromHome": "Work from Home",
+      "remote": "Remote"
+    },
+    "status": {
+      "permanent": "Permanent",
+      "contract": "Contract",
+      "probation": "Probation"
+    },
+    "roles": {
+      "leadUIUXDesigner": "Lead UI/UX Designer",
+      "srUIUXDesigner": "Sr. UI/UX Designer"
+    },
+    "hrManager": "HR Manager",
+    "table": {
+      "employeeID": "Employee ID",
+      "employeeName": "Employee Name",
+      "designation": "Designation",
+      "type": "Type",
+      "status": "Status",
+      "actions": "Action"
+    },
+    "actions": {
+      "view": "View Employee",
+      "edit": "Edit Employee",
+      "delete": "Delete Employee"
+    }
+  },
+  "accountAccess": {
+    "emailPlaceholder": "Enter Email Address",
+    "slackPlaceholder": "Enter Slack ID",
+    "skypePlaceholder": "Enter Skype ID",
+    "githubPlaceholder": "Enter GitHub ID",
+    "back": "Back",
+    "add": "Add"
+  },
+  "documentUpload": {
+    "dragDrop": "Drag & Drop or",
+    "chooseFile": "choose file",
+    "toUpload": "to upload",
+    "supportedFormats": "Supported formats: .jpeg, .pdf"
+  },
+  "addEmployee": {
+    "title": "Add New Employee",
+    "allEmployees": "All Employee",
+    "search": "Search",
+    "profileName": "Robert Allen",
+    "profileRole": "HR Manager",
+    "steps": {
+      "personal": "Personal Information",
+      "professional": "Professional Information",
+      "documents": "Documents",
+      "account": "Account Access"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "next": "Next",
+      "submit": "Add"
+    },
+    "docTitles": [
+      "Upload Appointment Letter",
+      "Upload Salary Slips",
+      "Upload Relieving Letter",
+      "Upload Experience Letter"
+    ]
+  },
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "mobileNumber": "Mobile Number",
+  "emailAddress": "Email Address",
+  "dateOfBirth": "Date of Birth",
+  "maritalStatus": "Marital Status",
+  "single": "Single",
+  "married": "Married",
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "nationality": {
+    "rwandan": "Rwandan",
+    "kenyan": "Kenyan",
+    "ugandan": "Ugandan"
+  },
+  "address": "Address",
+  "city": {
+    "kigali": "Kigali",
+    "musanze": "Musanze"
+  },
+  "state": {
+    "kigaliCity": "Kigali City",
+    "northernProvince": "Northern Province",
+    "southernProvince": "Southern Province",
+    "easternProvince": "Eastern Province",
+    "westernProvince": "Western Province"
+  },
+  "zipCode": "ZIP Code",
+  "commonActions": {
+    "cancel": "Cancel",
+    "next": "Next"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "subtitle": "All employee payslips",
+    "export": "Export",
+    "employeeName": "Employee Name",
+    "ctc": "Cost to Company (CTC)",
+    "salaryPerMonth": "Salary Per Month",
+    "deduction": "Deduction",
+    "status": "Status",
+    "statusValues": {
+      "completed": "Completed",
+      "pending": "Pending"
+    },
+    "showingResults": "Showing {{start}} to {{end}} of {{total}} results"
+  },
+  "jobBoard": {
+    "title": "Jobs",
+    "subtitle": "Show All Jobs",
+    "addNewJob": "Add New Job",
+    "cancel": "Cancel",
+    "add": "Add",
+    "close": "Close",
+    "jobTitlePlaceholder": "Enter Job Title",
+    "selectDepartment": "Select Department",
+    "department": "Department",
+    "selectLocation": "Select Location",
+    "salaryPlaceholder": "Enter Salary (e.g., $3000)",
+    "jobType": "Job Type",
+    "workType": "Select Type",
+    "activeJobs": "Active Jobs",
+    "inactiveJobs": "Inactive Jobs",
+    "completedJobs": "Completed Jobs",
+    "validationError": "Please fill in all required fields"
+  },
+  "jobs": {
+    "uiuxdesigner": "UI/UX Designer",
+    "sruxdesigner": "Sr. UX Designer",
+    "salesmanager": "Sales Manager",
+    "bdm": "BDM",
+    "hrexecutive": "HR Executive",
+    "pythondeveloper": "Python Developer",
+    "projectmanager": "Project Manager",
+    "businessanalyst": "Business Analyst",
+    "sruiuxlead": "Sr. UI/UX Lead",
+    "bde": "BDE"
+  },
+  "jobTypes": {
+    "fullTime": "Full Time",
+    "partTime": "Part Time"
+  },
+  "workTypes": {
+    "office": "Office",
+    "workFromHome": "Work from Home",
+    "remote": "Remote"
+  },
+  "period": {
+    "month": "Month"
+  },
+  "candidates": {
+    "title": "Candidates",
+    "subtitle": "Show All Candidates",
+    "hrManager": "HR Manager",
+    "selectAll": "Select all candidates",
+    "selectCandidate": "Select candidate {{name}}",
+    "table": {
+      "name": "Candidate Name",
+      "appliedFor": "Applied For",
+      "appliedDate": "Applied Date",
+      "email": "Email Address",
+      "phone": "Mobile Number",
+      "status": "Status"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "rowsPerPage": "Rows per page",
+      "recordsInfo": "Showing 1 to 10 out of 60 records",
+      "navigation": "Pagination navigation",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {{page}}"
+    }
+  },
+  "status": {
+    "selected": "Selected",
+    "inprocess": "In Process",
+    "rejected": "Rejected"
+  },
+  "holidays": {
+    "title": "Holidays",
+    "subtitle": "List of all holidays",
+    "searchPlaceholder": "Search holidays",
+    "addNewHoliday": "Add New Holiday",
+    "profileName": "Robert Allen",
+    "profileRole": "HR Manager",
+    "date": "Date",
+    "day": "Day",
+    "holidayName": "Holiday Name",
+    "legendUpcoming": "Upcoming Holiday",
+    "legendPast": "Past Holiday",
+    "modalTitle": "Add New Holiday",
+    "modalHolidayName": "Enter holiday name",
+    "modalSelectDate": "Select date",
+    "cancel": "Cancel",
+    "add": "Add",
+    "names": {
+      "newYearsDay": "New Year's Day",
+      "genocideMemorialDay": "Genocide Against the Tutsi Memorial Day",
+      "labourDay": "Labour Day",
+      "independenceDay": "Independence Day",
+      "liberationDay": "Liberation Day",
+      "assumptionDay": "Assumption Day",
+      "umuganuraDay": "Umuganura Day",
+      "allSaintsDay": "All Saints Day",
+      "christmasDay": "Christmas Day",
+      "boxingDay": "Boxing Day"
+    },
+    "table": {
+      "noRecords": "No holidays found"
+    }
+  },
+  
+  "departments": {
+    "all": "All Departments",
+    "sale": "Sales Department",
+    "design": "Design Department",
+    "projectManager": "Project Manager Department",
+    "marketing": "Marketing Department",
+    "default": "Department"
+  },
+  "allDepartments": {
+    "title": "All Departments",
+    "subtitle": "All Departments Information"
+  },
+  "viewAllDepartments": "View All",
+  "members": "Members",
+  "roles": {
+    "teamleaddesign": "Team Lead - Design",
+    "uiuxdesign": "UI/UX Design",
+    "webdesigner": "Web Designer",
+    "medicalassistant": "Medical Assistant",
+    "marketingcoordinator": "Marketing Coordinator",
+    "dataanalyst": "Data Analyst",
+    "pythondeveloper": "Python Developer",
+    "reactjs": "React JS",
+    "iosdeveloper": "iOS Developer",
+    "reactjsdeveloper": "React JS Developer",
+    "leadUIUXDesigner": "Lead UI/UX Designer",
+    "srUIUXDesigner": "Sr UI/UX Designer",
+    "uiuxDesigner": "UI/UX Designer",
+    "srSalesManager": "Sr Sales Manager",
+    "bdm": "BDM",
+    "bde": "BDE",
+    "sales": "Sales",
+    "srProjectManager": "Sr Project Manager",
+    "projectManager": "Project Manager",
+    "srMarketingManager": "Sr Marketing Manager",
+    "marketingCoordinator": "Marketing Coordinator",
+    "marketing": "Marketing"
+  }
+}

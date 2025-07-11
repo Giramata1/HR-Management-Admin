@@ -1,0 +1,404 @@
+{
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Tous les paramètres système"
+  },
+  "search": {
+    "placeholder": "Rechercher"
+  },
+  "notifications": {
+    "title": "Notifications"
+  },
+  "role": {
+    "hrManager": "Responsable RH"
+  },
+  "appearance": {
+    "title": "Apparence",
+    "description": "Sélectionnez votre thème préféré"
+  },
+  "language": {
+    "title": "Langue",
+    "description": "Sélectionnez votre langue"
+  },
+  "twoFactor": {
+    "title": "Authentification à deux facteurs",
+    "description": "Sécurisez votre compte en activant la 2FA par email"
+  },
+  "mobilePush": {
+    "title": "Notifications push mobile",
+    "description": "Recevez des notifications push sur mobile"
+  },
+  "desktopNotification": {
+    "title": "Notification de bureau",
+    "description": "Recevez des notifications push sur bureau"
+  },
+  "emailNotifications": {
+    "title": "Notifications par email",
+    "description": "Recevez des mises à jour par email"
+  },
+  "attendance": {
+    "title": "Vue d'ensemble de la présence",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois",
+    "days": {
+      "Mon": "Lun",
+      "Tue": "Mar",
+      "Wed": "Mer",
+      "Thu": "Jeu",
+      "Fri": "Ven",
+      "Sat": "Sam",
+      "Sun": "Dim"
+    }
+  },
+  "attendanceTable": {
+    "title": "Vue d'ensemble de la présence",
+    "viewAll": "Voir tout",
+    "name": "Nom de l'employé",
+    "designation": "Poste",
+    "type": "Type",
+    "checkIn": "Heure d’arrivée",
+    "status": "Statut",
+    "onTime": "À l'heure",
+    "late": "En retard",
+    "noRecords": "Aucun enregistrement de présence trouvé."
+  },
+  "schedule": {
+    "title": "Mon emploi du temps",
+    "roles": {
+      "UI/UX Designer": "Concepteur UI/UX",
+      "Magento Developer": "Développeur Magento",
+      "Sales Manager": "Responsable des ventes",
+      "Front end Developer": "Développeur front-end",
+      "React JS": "React JS"
+    },
+    "tasks": {
+      "Practical Task Review": "Revue des tâches pratiques",
+      "Resume Review": "Revue du CV",
+      "Final HR Round": "Tour final RH",
+      "TL Meeting": "Réunion avec le chef d'équipe"
+    },
+    "dayHeaders": [
+      "Di",
+      "Lu",
+      "Ma",
+      "Me",
+      "Je",
+      "Ve",
+      "Sa"
+    ]
+  },
+  "dashboard": {
+    "totalEmployee": "Total des employés",
+    "totalApplicant": "Total des candidats",
+    "todayAttendance": "Présence aujourd'hui",
+    "totalProjects": "Total des projets",
+    "updateDate": "Mise à jour : {{date}}"
+  },
+  "header": {
+    "helloUser": "Bonjour {{name}}",
+    "goodMorning": "Bonjour",
+    "goodAfternoon": "Bon après-midi",
+    "goodEvening": "Bonsoir",
+    "searchPlaceholder": "Rechercher...",
+    "profileAlt": "Photo de profil de {{name}}",
+    "hrManager": "Responsable RH",
+    "myProfile": "Mon profil",
+    "logout": "Déconnexion"
+  },
+  "sidebar": {
+    "dashboard": "Tableau de bord",
+    "allEmployees": "Tous les employés",
+    "allDepartments": "Tous les départements",
+    "attendance": "Présence",
+    "payroll": "Paie",
+    "jobs": "Emplois",
+    "candidates": "Candidats",
+    "leaves": "Congés",
+    "holidays": "Jours fériés",
+    "settings": "Paramètres",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "employees": {
+    "addNew": "Ajouter un nouvel employé",
+    "filter": "Filtrer",
+    "cancel": "Annuler",
+    "apply": "Appliquer",
+    "noEmployees": "Aucun employé trouvé. Cliquez sur \"Ajouter un nouvel employé\".",
+    "showing": "Affichage de {{count}} sur {{total}} résultats",
+    "id": "ID",
+    "actionsLabel": "Actions",
+    "type": "Type",
+    "departments": {
+      "Design": "Design",
+      "Java": "Java",
+      "Python": "Python",
+      "React JS": "React JS",
+      "HR": "RH",
+      "Sales": "Ventes",
+      "Business Analyst": "Analyste commercial",
+      "Project Manager": "Chef de projet",
+      "Account": "Comptabilité",
+      "Node JS": "Node JS"
+    },
+    "types": {
+      "office": "Bureau",
+      "workFromHome": "Télétravail",
+      "remote": "Télétravail à distance"
+    },
+    "status": {
+      "permanent": "Permanent",
+      "contract": "Contrat",
+      "probation": "Période d'essai"
+    },
+    "roles": {
+      "leadUIUXDesigner": "Chef de file UI/UX Designer",
+      "srUIUXDesigner": "Sr UI/UX Designer"
+    },
+    "hrManager": "Responsable RH",
+    "table": {
+      "employeeID": "ID de l'employé",
+      "employeeName": "Nom de l'employé",
+      "designation": "Poste",
+      "type": "Type",
+      "status": "Statut",
+      "actions": "Action"
+    },
+    "actions": {
+      "view": "Voir l'employé",
+      "edit": "Modifier l'employé",
+      "delete": "Supprimer l'employé"
+    }
+  },
+  "accountAccess": {
+    "emailPlaceholder": "Entrez l'adresse email",
+    "slackPlaceholder": "Entrez l'ID Slack",
+    "skypePlaceholder": "Entrez l'ID Skype",
+    "githubPlaceholder": "Entrez l'ID GitHub",
+    "back": "Retour",
+    "add": "Ajouter"
+  },
+  "documentUpload": {
+    "dragDrop": "Glissez-déposez ou",
+    "chooseFile": "choisissez un fichier",
+    "toUpload": "à uploader",
+    "supportedFormats": "Formats supportés : .jpeg, .pdf"
+  },
+  "addEmployee": {
+    "title": "Ajouter un nouvel employé",
+    "allEmployees": "Tous les employés",
+    "search": "Rechercher",
+    "profileName": "Robert Allen",
+    "profileRole": "Responsable RH",
+    "steps": {
+      "personal": "Informations personnelles",
+      "professional": "Informations professionnelles",
+      "documents": "Documents",
+      "account": "Accès au compte"
+    },
+    "buttons": {
+      "cancel": "Annuler",
+      "next": "Suivant",
+      "submit": "Ajouter"
+    },
+    "docTitles": [
+      "Télécharger la lettre de nomination",
+      "Télécharger les fiches de paie",
+      "Télécharger la lettre de soulagement",
+      "Télécharger la lettre d'expérience"
+    ]
+  },
+  "firstName": "Prénom",
+  "lastName": "Nom",
+  "mobileNumber": "Numéro de mobile",
+  "emailAddress": "Adresse email",
+  "dateOfBirth": "Date de naissance",
+  "maritalStatus": "État civil",
+  "single": "Célibataire",
+  "married": "Marié",
+  "gender": {
+    "male": "Homme",
+    "female": "Femme"
+  },
+  "nationality": {
+    "rwandan": "Rwandais",
+    "kenyan": "Kényan",
+    "ugandan": "Ougandais"
+  },
+  "address": "Adresse",
+  "city": {
+    "kigali": "Kigali",
+    "musanze": "Musanze"
+  },
+  "state": {
+    "kigaliCity": "Ville de Kigali",
+    "northernProvince": "Province du Nord",
+    "southernProvince": "Province du Sud",
+    "easternProvince": "Province de l'Est",
+    "westernProvince": "Province de l'Ouest"
+  },
+  "zipCode": "Code postal",
+  "commonActions": {
+    "cancel": "Annuler",
+    "next": "Suivant"
+  },
+  "payroll": {
+    "title": "Paie",
+    "subtitle": "Toutes les fiches de paie des employés",
+    "export": "Exporter",
+    "employeeName": "Nom de l'employé",
+    "ctc": "Coût total de l'entreprise (CTC)",
+    "salaryPerMonth": "Salaire par mois",
+    "deduction": "Déduction",
+    "status": "Statut",
+    "statusValues": {
+      "completed": "Terminé",
+      "pending": "En attente"
+    },
+    "showingResults": "Affichage de {{start}} à {{end}} sur {{total}} résultats"
+  },
+  "jobBoard": {
+    "title": "Offres d'emploi",
+    "subtitle": "Afficher toutes les offres",
+    "addNewJob": "Ajouter une offre",
+    "cancel": "Annuler",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "jobTitlePlaceholder": "Entrer le titre du poste",
+    "selectDepartment": "Sélectionner un département",
+    "department": "Département",
+    "selectLocation": "Sélectionner un lieu",
+    "salaryPlaceholder": "Entrer le salaire (ex. : 3000€)",
+    "jobType": "Type d'emploi",
+    "workType": "Type de travail",
+    "activeJobs": "Postes actifs",
+    "inactiveJobs": "Postes inactifs",
+    "completedJobs": "Postes terminés",
+    "validationError": "Veuillez remplir tous les champs requis"
+  },
+  "jobs": {
+  "uiuxdesigner": "Concepteur UI/UX",
+  "salesmanager": "Responsable des ventes",
+  "sruxdesigner": "Designer UX senior",
+  "srpythondeveloper": "Développeur Python senior",
+  "bde": "Développeur commercial",
+  "hrexecutive": "Responsable RH",
+  "projectmanager": "Chef de projet",
+  "businessanalyst": "Analyste commercial",
+  "sruiuxlead": "Chef d'équipe UI/UX",
+  "bdm": "Responsable du développement commercial"
+},
+  "jobTypes": {
+    "fullTime": "Temps plein",
+    "partTime": "Temps partiel"
+  },
+  "workTypes": {
+    "office": "Au bureau",
+    "workFromHome": "Télétravail",
+    "remote": "À distance"
+  },
+  "period": {
+    "month": "Mois"
+  },
+  "candidates": {
+    "title": "Candidats",
+    "subtitle": "Afficher tous les candidats",
+    "hrManager": "Responsable RH",
+    "selectAll": "Sélectionner tous les candidats",
+    "selectCandidate": "Sélectionner le candidat {{name}}",
+    "table": {
+      "name": "Nom du candidat",
+      "appliedFor": "Postulé pour",
+      "appliedDate": "Date de candidature",
+      "email": "Adresse email",
+      "phone": "Numéro de mobile",
+      "status": "Statut"
+    },
+    "pagination": {
+      "showing": "Affichage",
+      "rowsPerPage": "Lignes par page",
+      "recordsInfo": "Affichage de 1 à 10 sur 60 enregistrements",
+      "navigation": "Navigation de pagination",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {{page}}"
+    }
+  },
+  "status": {
+    "selected": "Sélectionné",
+    "inprocess": "En cours",
+    "rejected": "Rejeté"
+  },
+  "holidays": {
+  "title": "Jours fériés",
+  "subtitle": "Liste de tous les jours fériés",
+  "searchPlaceholder": "Rechercher",
+  "addNewHoliday": "Ajouter un nouveau jour férié",
+  "profileName": "Robert Allen",
+  "profileRole": "Responsable RH",
+  "date": "Date",
+  "day": "Jour",
+  "holidayName": "Nom du jour férié",
+  "legendUpcoming": "À venir",
+  "legendPast": "Jours fériés passés",
+  "modalTitle": "Ajouter un nouveau jour férié",
+  "modalHolidayName": "Nom du jour férié",
+  "modalSelectDate": "Sélectionner la date",
+  "cancel": "Annuler",
+  "add": "Ajouter",
+  "names": {
+    "newYearsDay": "Jour de l'An",
+    "genocideMemorialDay": "Jour du Souvenir du Génocide contre les Tutsi",
+    "labourDay": "Fête du Travail",
+    "independenceDay": "Fête de l'Indépendance",
+    "liberationDay": "Fête de la Libération",
+    "assumptionDay": "Assomption",
+    "umuganuraDay": "Jour d’Umuganura",
+    "allSaintsDay": "La Toussaint",
+    "christmasDay": "Noël",
+    "boxingDay": "Lendemain de Noël"
+  },
+  "table": {
+    "noRecords": "Aucun jour férié trouvé"
+  }
+},
+  "departments": {
+    "all": "Tous les départements",
+    "sale": "Département des ventes",
+    "design": "Département de design",
+    "projectManager": "Département du chef de projet",
+    "marketing": "Département marketing",
+    "default": "Département"
+  },
+  "allDepartments": {
+    "title": "Tous les départements",
+    "subtitle": "Toutes les informations des départements"
+  },
+  "viewAllDepartments": "Voir tout",
+  "members": "Membres",
+  "roles": {
+    "teamleaddesign": "Chef d'équipe - Design",
+    "uiuxdesign": "Conception UI/UX",
+    "webdesigner": "Concepteur Web",
+    "medicalassistant": "Assistant médical",
+    "marketingcoordinator": "Coordinateur marketing",
+    "dataanalyst": "Analyste de données",
+    "phytondeveloper": "Développeur Phyton",
+    "reactjs": "React JS",
+    "iosdeveloper": "Développeur iOS",
+    "reactjsdeveloper": "Développeur React JS",
+    "leadUIUXDesigner": "Chef de file UI/UX Designer",
+    "srUIUXDesigner": "Sr UI/UX Designer",
+    "uiuxDesigner": "Concepteur UI/UX",
+    "srSalesManager": "Responsable des ventes senior",
+    "bdm": "Directeur du développement commercial",
+    "bde": "Développeur commercial",
+    "sales": "Ventes",
+    "srProjectManager": "Chef de projet senior",
+    "projectManager": "Chef de projet",
+    "srMarketingManager": "Responsable marketing senior",
+    "marketingCoordinator": "Coordinateur marketing",
+    "marketing": "Marketing"
+  }
+}
