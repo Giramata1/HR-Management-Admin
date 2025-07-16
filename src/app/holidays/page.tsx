@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Bell, ChevronDown, Plus, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
@@ -43,23 +43,55 @@ export default function HolidayPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [holidayName, setHolidayName] = useState('');
   const [holidayDate, setHolidayDate] = useState('');
+  const [customHolidays, setCustomHolidays] = useState<{
+    name: string;
+    date: string;
+    day: string;
+    upcoming: boolean;
+  }[]>([]);
 
   const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-  const holidays = generateRwandaHolidays(t, locale);
+  const baseHolidays = generateRwandaHolidays(t, locale);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('customHolidays');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setCustomHolidays(parsed);
+    }
+  }, []);
+
+  const handleAddHoliday = () => {
+    if (!holidayName || !holidayDate) return;
+
+    const dateObj = new Date(holidayDate);
+    const newHoliday = {
+      name: holidayName,
+      date: dateObj.toLocaleDateString(locale, {
+        month: 'long',
+        day: '2-digit',
+        year: 'numeric',
+      }),
+      day: dateObj.toLocaleDateString(locale, { weekday: 'long' }),
+      upcoming: dateObj >= new Date(),
+    };
+
+    const updated = [...customHolidays, newHoliday];
+    setCustomHolidays(updated);
+    localStorage.setItem('customHolidays', JSON.stringify(updated));
+    setHolidayName('');
+    setHolidayDate('');
+    setIsModalOpen(false);
+  };
+
+  const holidays = [...baseHolidays, ...customHolidays];
 
   const filtered = holidays.filter(h =>
     h.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddHoliday = () => {
-    setIsModalOpen(false);
-    setHolidayName('');
-    setHolidayDate('');
-  };
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-gray-900 dark:text-white">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4 sm:gap-0">
         <div>
           <h1 className="text-lg sm:text-xl font-semibold">{t('holidays.title')}</h1>
@@ -102,7 +134,6 @@ export default function HolidayPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 sm:p-6 border-b dark:border-gray-700 gap-4 sm:gap-0">
           <div className="relative w-full sm:w-48 md:w-64">
@@ -159,7 +190,6 @@ export default function HolidayPage() {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 text-sm font-semibold text-gray-900 dark:text-white">
         <div className="flex items-center space-x-2">
           <span className="w-3 h-3 bg-purple-600 rounded-full inline-block" />
@@ -171,7 +201,6 @@ export default function HolidayPage() {
         </div>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 sm:px-6 py-6 w-full max-w-xs sm:max-w-md mx-4 shadow-xl">
