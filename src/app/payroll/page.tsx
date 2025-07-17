@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, Download, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { Search, Download, ChevronLeft, ChevronRight, Bell, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface PayrollEmployee {
@@ -19,6 +19,18 @@ const PayrollPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Modal open state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // New payroll form state
+  const [newPayroll, setNewPayroll] = useState<Omit<PayrollEmployee, 'id'>>({
+    name: '',
+    ctc: 0,
+    salaryPerMonth: 0,
+    deduction: 0,
+    status: 'Pending',
+  });
 
   const payrollData = useMemo<PayrollEmployee[]>(() => [
     { id: 8, name: 'Albert Flores', ctc: 60000, salaryPerMonth: 5000, deduction: 150, status: 'Completed' },
@@ -53,9 +65,45 @@ const PayrollPage = () => {
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+ 
+  const closeModal = () => {
+    setIsModalOpen(false);
+   
+    setNewPayroll({
+      name: '',
+      ctc: 0,
+      salaryPerMonth: 0,
+      deduction: 0,
+      status: 'Pending',
+    });
+  };
+
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewPayroll(prev => ({
+      ...prev,
+      [name]: name === 'ctc' || name === 'salaryPerMonth' || name === 'deduction' ? Number(value) : value,
+    }));
+  };
+
+  
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+   
+    console.log('New Payroll Data:', newPayroll);
+    alert(`New payroll added for: ${newPayroll.name}`);
+    closeModal();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-      {/* Header */}
+     
       <div className="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="max-w-full sm:max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
@@ -106,7 +154,7 @@ const PayrollPage = () => {
         </div>
       </div>
 
-      {/* Body */}
+     
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="max-w-full sm:max-w-7xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
@@ -131,10 +179,18 @@ const PayrollPage = () => {
                   <span className="hidden sm:inline">{t('payroll.export')}</span>
                   <span className="sm:hidden">{t('payroll.export')}</span>
                 </button>
+
+                <button
+                  onClick={openModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors text-sm shadow-md"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Payroll</span>
+                </button>
               </div>
             </div>
 
-            {/* Table */}
+           
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
                 <thead className="bg-gray-50 dark:bg-gray-700">
@@ -247,9 +303,113 @@ const PayrollPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal Overlay */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md p-6 relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              aria-label="Close modal"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Payroll</h2>
+            <form onSubmit={handleFormSubmit} className="space-y-4 text-gray-900 dark:text-white">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1">Employee Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={newPayroll.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="ctc" className="block text-sm font-medium mb-1">CTC</label>
+                <input
+                  type="number"
+                  id="ctc"
+                  name="ctc"
+                  value={newPayroll.ctc}
+                  onChange={handleInputChange}
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="salaryPerMonth" className="block text-sm font-medium mb-1">Salary per Month</label>
+                <input
+                  type="number"
+                  id="salaryPerMonth"
+                  name="salaryPerMonth"
+                  value={newPayroll.salaryPerMonth}
+                  onChange={handleInputChange}
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="deduction" className="block text-sm font-medium mb-1">Deduction</label>
+                <input
+                  type="number"
+                  id="deduction"
+                  name="deduction"
+                  value={newPayroll.deduction}
+                  onChange={handleInputChange}
+                  min={0}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium mb-1">Status</label>
+                <select
+                  id="status"
+                  name="status"
+                  value={newPayroll.status}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                >
+                  Add Payroll
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// Wrap with dynamic to disable SSR, avoiding hydration issues
 export default dynamic(() => Promise.resolve(PayrollPage), { ssr: false });
