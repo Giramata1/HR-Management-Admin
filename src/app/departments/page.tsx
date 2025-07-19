@@ -1,9 +1,12 @@
+
 'use client'
 
 import { useState } from 'react'
-import { Search, Bell, ChevronDown, ChevronRight } from 'lucide-react'
+import { Search, Bell, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/components/AuthContext'
+import Image from 'next/image'
 
 interface Employee {
   name: string
@@ -18,9 +21,31 @@ interface Departments {
   }
 }
 
+// Component for rendering employee avatar with fallback
+const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  return (
+    <Image
+      src={imgSrc}
+      alt={name}
+      width={32}
+      height={32}
+      className="rounded-full h-8 w-8 object-cover"
+      onError={() =>
+        setImgSrc(
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=32`
+        )
+      }
+    />
+  )
+}
+
 const Index = () => {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
+  const [showAddDepartment, setShowAddDepartment] = useState(false)
+  const [newDepartmentName, setNewDepartmentName] = useState('')
 
   const departments: Departments = {
     design: {
@@ -65,7 +90,10 @@ const Index = () => {
     },
   }
 
-  const filteredDepartments = Object.entries(departments).reduce((acc, [slug, dept]) => {
+  // State to manage dynamic departments
+  const [dynamicDepartments, setDynamicDepartments] = useState<Departments>(departments)
+
+  const filteredDepartments = Object.entries(dynamicDepartments).reduce((acc, [slug, dept]) => {
     const filteredEmployees = dept.employees.filter(emp =>
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -84,6 +112,21 @@ const Index = () => {
     return words.length >= 2
       ? `${words[0][0]}${words[1][0]}`.toUpperCase()
       : words[0].slice(0, 2).toUpperCase()
+  }
+
+  const handleAddDepartment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newDepartmentName.trim() && !dynamicDepartments[newDepartmentName.toLowerCase()]) {
+      setDynamicDepartments(prev => ({
+        ...prev,
+        [newDepartmentName.toLowerCase()]: {
+          name: newDepartmentName,
+          employees: [],
+        },
+      }))
+      setNewDepartmentName('')
+      setShowAddDepartment(false)
+    }
   }
 
   return (
@@ -105,13 +148,21 @@ const Index = () => {
             />
           </div>
           <Bell className="text-gray-500 dark:text-gray-400 cursor-pointer" />
+          <button
+            onClick={() => setShowAddDepartment(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t('Add Department')}
+          </button>
           <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border px-3 py-2 rounded-lg">
-            <div className="rounded-full bg-purple-100 dark:bg-purple-700 text-purple-700 dark:text-white h-8 w-8 flex items-center justify-center text-sm font-semibold">
-              RA
-            </div>
+            <EmployeeAvatar
+              src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=32`}
+              name={user?.fullName || 'User'}
+            />
             <div className="hidden sm:block">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('role.hrManager')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'User'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || 'HR Manager'}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400" />
           </div>
@@ -149,6 +200,46 @@ const Index = () => {
           </div>
         ))}
       </div>
+
+      {/* Add Department Modal */}
+      {showAddDepartment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('Add New Department ')}</h2>
+            <form onSubmit={handleAddDepartment} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"></label>
+                <input
+                  type="text"
+                  value={newDepartmentName}
+                  onChange={(e) => setNewDepartmentName(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white p-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  placeholder={t('Enter DepartmentName')}
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddDepartment(false)
+                    setNewDepartmentName('')
+                  }}
+                  className="bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                >
+                  {t('Add')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

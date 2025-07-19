@@ -23,7 +23,7 @@ import {
 import { useEffect, useState } from 'react';
 
 const menuItems = [
-  { icon: LayoutGrid, labelKey: 'sidebar.dashboard', href: '/' },
+  { icon: LayoutGrid, labelKey: 'sidebar.dashboard', href: '/dashboard' },
   { icon: Users, labelKey: 'sidebar.allEmployees', href: '/employees' },
   { icon: RefreshCw, labelKey: 'sidebar.allDepartments', href: '/departments' },
   { icon: CalendarCheck, labelKey: 'sidebar.attendance', href: '/attendance' },

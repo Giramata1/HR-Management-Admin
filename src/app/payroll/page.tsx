@@ -1,57 +1,80 @@
-'use client';
 
-import React, { useState, useMemo } from 'react';
-import dynamic from 'next/dynamic';
-import { Search, Download, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+'use client'
+
+import React, { useState, useMemo } from 'react'
+
+import { Search, Download, ChevronLeft, ChevronRight, Bell } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/components/AuthContext'
+import Image from 'next/image'
 
 interface PayrollEmployee {
-  id: number;
-  name: string;
-  ctc: number;
-  salaryPerMonth: number;
-  deduction: number;
-  status: 'Completed' | 'Pending';
+  id: number
+  name: string
+  ctc: number
+  salaryPerMonth: number
+  deduction: number
+  status: 'Completed' | 'Pending'
+}
+
+// Component for rendering authenticated user's avatar with fallback
+const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  return (
+    <Image
+      src={imgSrc}
+      alt={name}
+      width={40}
+      height={40}
+      className="rounded-full w-8 h-8 sm:w-10 sm:h-10 object-cover"
+      onError={() =>
+        setImgSrc(
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=40`
+        )
+      }
+    />
+  )
 }
 
 const PayrollPage = () => {
-  const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const { t } = useTranslation()
+  const { user } = useAuth()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   const payrollData = useMemo<PayrollEmployee[]>(() => [
     { id: 8, name: 'Albert Flores', ctc: 60000, salaryPerMonth: 5000, deduction: 150, status: 'Completed' },
     { id: 9, name: 'Savannah Nguyen', ctc: 25000, salaryPerMonth: 2200, deduction: 0, status: 'Pending' },
     { id: 10, name: 'Marvin McKinney', ctc: 30000, salaryPerMonth: 2700, deduction: 0, status: 'Completed' },
     { id: 11, name: 'Jerome Bell', ctc: 78000, salaryPerMonth: 6400, deduction: 0, status: 'Completed' },
-  ], []);
+  ], [])
 
   const filteredData = useMemo(() => {
     return payrollData.filter(employee =>
       employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, payrollData]);
+    )
+  }, [searchTerm, payrollData])
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
 
   const getStatusColor = (status: PayrollEmployee['status']): string => {
     return status === 'Completed'
       ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
-      : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300';
-  };
+      : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300'
+  }
 
   const formatCurrency = (amount: number): string => {
-    return `$${amount.toLocaleString()}`;
-  };
+    return `$${amount.toLocaleString()}`
+  }
 
   const handleExport = () => {
-    alert(t('exportAlert', { defaultValue: 'Fonctionnalité d’export à implémenter' }));
-  };
+    alert(t('exportAlert', { defaultValue: 'Fonctionnalité d’export à implémenter' }))
+  }
 
-  const getInitial = (name: string) => name.charAt(0).toUpperCase();
+  const getInitial = (name: string) => name.charAt(0).toUpperCase()
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -87,15 +110,16 @@ const PayrollPage = () => {
             </button>
 
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 sm:px-3 py-2 cursor-pointer select-none">
-              <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-base sm:text-lg">
-                {getInitial(t('user.name', { defaultValue: 'Robert Allen' }))}
-              </div>
+              <EmployeeAvatar
+                src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=40`}
+                name={user?.fullName || 'User'}
+              />
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('user.name', { defaultValue: 'Robert Allen' })}
+                  {user?.fullName || 'User'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('role.hrManager')}
+                  {user?.role || t('role.hrManager')}
                 </p>
               </div>
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -248,8 +272,7 @@ const PayrollPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-// Wrap with dynamic to disable SSR, avoiding hydration issues
-export default dynamic(() => Promise.resolve(PayrollPage), { ssr: false });
+export default PayrollPage

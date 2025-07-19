@@ -1,9 +1,11 @@
-'use client';
 
-import { useState } from 'react';
-import { Search, Bell, ChevronDown } from 'lucide-react';
-import Image from 'next/image';
-import { useTranslation } from 'react-i18next';
+'use client'
+
+import { useState } from 'react'
+import { Search, Bell, ChevronDown } from 'lucide-react'
+import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/components/AuthContext'
 
 const candidates = [
   { name: 'Leasie Watson', title: 'UI/UX Designer', date: 'July 14, 2023', email: 'leasie.w@demo.com', phone: '(629) 555-0129', status: 'Selected' },
@@ -16,40 +18,60 @@ const candidates = [
   { name: 'Jacob Jones', title: 'Business Analyst', date: 'July 14, 2023', email: 'jacob.j@demo.com', phone: '(208) 555-0112', status: 'Selected' },
   { name: 'Cameron Williamson', title: 'Sr. UI/UX Lead', date: 'July 14, 2023', email: 'cameron.w@demo.com', phone: '(671) 555-0110', status: 'In Process' },
   { name: 'Bessie Cooper', title: 'BDM', date: 'July 14, 2023', email: 'bessie.c@demo.com', phone: '(225) 555-0118', status: 'Rejected' },
-];
+]
+
+// Component for rendering avatars with fallback
+const EmployeeAvatar = ({ src, name, size }: { src: string; name: string; size: number }) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  return (
+    <Image
+      src={imgSrc}
+      alt={name}
+      width={size}
+      height={size}
+      className={`rounded-full ${size === 36 ? 'w-8 h-8 sm:w-9 sm:h-9' : 'w-8 h-8 sm:w-10 sm:h-10'} object-cover`}
+      onError={() =>
+        setImgSrc(
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=${size}`
+        )
+      }
+    />
+  )
+}
 
 export default function CandidateList() {
-  const { t } = useTranslation();
-  const [search, setSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const { t } = useTranslation()
+  const { user } = useAuth()
+  const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const filteredCandidates = candidates.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.title.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase())
-  );
+  )
 
-  const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage)
 
   const statusColor = (status: string) => {
     switch (status) {
       case 'Selected':
-        return 'text-green-600 bg-green-100 dark:bg-green-800 dark:text-green-300';
+        return 'text-green-600 bg-green-100 dark:bg-green-800 dark:text-green-300'
       case 'In Process':
-        return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-800 dark:text-yellow-300';
+        return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-800 dark:text-yellow-300'
       case 'Rejected':
-        return 'text-red-600 bg-red-100 dark:bg-red-800 dark:text-red-300';
+        return 'text-red-600 bg-red-100 dark:bg-red-800 dark:text-red-300'
       default:
-        return 'text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300';
+        return 'text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300'
     }
-  };
+  }
 
   // Format job title key for i18n lookup
   const getJobTranslationKey = (title: string) =>
-    title.toLowerCase().replace(/[^\w]/g, '');
+    title.toLowerCase().replace(/[^\w]/g, '')
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-gray-900 dark:text-white">
@@ -77,10 +99,14 @@ export default function CandidateList() {
           </button>
 
           <div className="flex items-center space-x-2 sm:space-x-3 border border-gray-200 dark:border-gray-700 px-2 sm:px-3 py-2 rounded-md bg-white dark:bg-gray-800">
-            <Image src="/avatars/placeholder.png" alt="User" width={32} height={32} className="rounded-full w-8 h-8 sm:w-10 sm:h-10" />
+            <EmployeeAvatar
+              src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=40`}
+              name={user?.fullName || 'User'}
+              size={40}
+            />
             <div className="hidden sm:block">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Robert Allen</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('candidates.hrManager')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'User'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || t('candidates.hrManager', { defaultValue: 'HR Manager' })}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
           </div>
@@ -111,7 +137,11 @@ export default function CandidateList() {
                 <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 sm:px-6 py-3"><input type="checkbox" /></td>
                   <td className="px-4 sm:px-6 py-3 flex items-center space-x-3">
-                    <Image src="/avatars/placeholder.png" alt={c.name} width={36} height={36} className="rounded-full w-8 h-8 sm:w-9 sm:h-9" />
+                    <EmployeeAvatar
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=6b7280&color=fff&size=36`}
+                      name={c.name}
+                      size={36}
+                    />
                     <span>{c.name}</span>
                   </td>
                   <td className="px-4 sm:px-6 py-3">
@@ -160,5 +190,5 @@ export default function CandidateList() {
         </div>
       </div>
     </div>
-  );
+  )
 }

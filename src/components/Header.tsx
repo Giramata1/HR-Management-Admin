@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+
 import { useRouter } from 'next/navigation';
 import { Search, Bell, LogOut, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/components/AuthContext'; // Adjust path based on your project
 
 export default function Header() {
   const { t, i18n } = useTranslation();
@@ -13,13 +14,16 @@ export default function Header() {
   const [ready, setReady] = useState(false);
   const router = useRouter();
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
+  const { user } = useAuth(); 
 
   useEffect(() => {
     // Theme detection logic
     const checkTheme = () => {
-      const savedTheme = localStorage.getItem('theme');
-      const isDark = document.documentElement.classList.contains('dark');
-      setIsDarkMode(savedTheme === 'dark' || isDark);
+      if (typeof window !== 'undefined') {
+        const savedTheme = localStorage.getItem('theme');
+        const isDark = document.documentElement.classList.contains('dark');
+        setIsDarkMode(savedTheme === 'dark' || isDark);
+      }
     };
 
     checkTheme();
@@ -30,7 +34,9 @@ export default function Header() {
       if (e.key === 'theme') checkTheme();
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+    }
 
     // Wait for i18n initialization
     if (i18n.isInitialized) {
@@ -46,7 +52,9 @@ export default function Header() {
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('storage', handleStorageChange);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+      }
       clearInterval(timer);
     };
   }, [i18n]);
@@ -62,9 +70,16 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
+    router.push('/loginForm');
   };
+
+  // Fallback to localStorage if AuthContext is not available
+  const loggedInUser = user || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {});
+  const userName = loggedInUser.fullName || 'User';
+  const userRole = loggedInUser.role || t('header.hrManager');
 
   return (
     <>
@@ -80,7 +95,7 @@ export default function Header() {
         {/* Left: Greeting */}
         <div className="w-full md:w-auto">
           <h1 className={`text-xl sm:text-2xl font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {t('header.helloUser', { name: 'Robert' })} 👋
+            {t('header.helloUser', { name: userName })} 👋
           </h1>
           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             {getGreeting()}
@@ -115,21 +130,15 @@ export default function Header() {
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                <Image
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face"
-                  alt={t('header.profileAlt', { name: 'Robert Allen' })}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
-                />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'}`}>
+                {userName.charAt(0).toUpperCase()}
               </div>
               <div className="hidden sm:flex flex-col">
                 <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Robert Allen
+                  {userName}
                 </span>
                 <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {t('header.hrManager')}
+                  {userRole}
                 </span>
               </div>
               <svg

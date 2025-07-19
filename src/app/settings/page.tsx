@@ -1,56 +1,78 @@
-'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Search, Bell, ChevronDown } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
+import { Search, Bell, ChevronDown } from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/components/AuthContext'
 
 interface ToggleProps {
-  enabled: boolean;
-  onToggle: () => void;
+  enabled: boolean
+  onToggle: () => void
 }
 
 interface DropdownProps {
-  value: string;
-  options: { label: string; value: string }[];
-  onChange: (value: string) => void;
+  value: string
+  options: { label: string; value: string }[]
+  onChange: (value: string) => void
+}
+
+// Component for rendering authenticated user's avatar with fallback
+const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  return (
+    <Image
+      src={imgSrc}
+      alt={name}
+      width={40}
+      height={40}
+      className="rounded-full w-8 h-8 sm:w-10 sm:h-10 object-cover"
+      onError={() =>
+        setImgSrc(
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=40`
+        )
+      }
+    />
+  )
 }
 
 const Settings = () => {
-  const { theme, setTheme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { theme, setTheme } = useTheme()
+  const { t, i18n } = useTranslation()
+  const { user } = useAuth()
 
-  const [language, setLanguage] = useState(i18n.language);
-  const [twoFactor, setTwoFactor] = useState(true);
-  const [mobilePush, setMobilePush] = useState(true);
-  const [desktopNotification, setDesktopNotification] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [language, setLanguage] = useState(i18n.language)
+  const [twoFactor, setTwoFactor] = useState(true)
+  const [mobilePush, setMobilePush] = useState(true)
+  const [desktopNotification, setDesktopNotification] = useState(true)
+  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (i18n.isInitialized) {
-      setReady(true);
+      setReady(true)
     } else {
-      const handleInitialized = () => setReady(true);
-      i18n.on('initialized', handleInitialized);
+      const handleInitialized = () => setReady(true)
+      i18n.on('initialized', handleInitialized)
       return () => {
-        i18n.off('initialized', handleInitialized);
-      };
+        i18n.off('initialized', handleInitialized)
+      }
     }
-  }, [i18n]);
+  }, [i18n])
 
   const languageOptions = [
     { label: t('language.english', { defaultValue: 'English' }), value: 'en' },
     { label: t('language.french', { defaultValue: 'Français' }), value: 'fr' },
-  ];
+  ]
 
   const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    i18n.changeLanguage(value);
-    localStorage.setItem('i18nextLng', value);
-  };
+    setLanguage(value)
+    i18n.changeLanguage(value)
+    localStorage.setItem('i18nextLng', value)
+  }
 
   const Toggle = ({ enabled, onToggle }: ToggleProps) => (
     <div
@@ -65,7 +87,7 @@ const Settings = () => {
         }`}
       />
     </div>
-  );
+  )
 
   const Dropdown = ({ value, options, onChange }: DropdownProps) => (
     <div className="relative w-full sm:w-48">
@@ -82,10 +104,10 @@ const Settings = () => {
       </select>
       <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
     </div>
-  );
+  )
 
   if (!ready) {
-    return null;
+    return null
   }
 
   return (
@@ -159,16 +181,13 @@ const Settings = () => {
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-3 border border-gray-200 dark:border-gray-700 px-2 sm:px-3 py-2 rounded-md bg-white dark:bg-gray-800">
-              <Image
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"
-                alt={t('user.name', { defaultValue: 'Robert Allen' })}
-                width={32}
-                height={32}
-                className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
+              <EmployeeAvatar
+                src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=40`}
+                name={user?.fullName || 'User'}
               />
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('user.name', { defaultValue: 'Robert Allen' })}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('role.hrManager', { defaultValue: 'HR Manager' })}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'User'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || t('role.hrManager', { defaultValue: 'HR Manager' })}</p>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </div>
@@ -257,7 +276,7 @@ const Settings = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings

@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import {
   Search,
   Bell,
@@ -12,9 +12,11 @@ import {
   Trash2,
   Filter,
   Plus,
-} from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
+} from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/components/AuthContext'
+import Image from 'next/image'
 
 // Utility Components
 const Input = ({
@@ -27,7 +29,7 @@ const Input = ({
     }`}
     {...props}
   />
-);
+)
 
 const Button = ({
   className,
@@ -42,14 +44,14 @@ const Button = ({
   >
     {children}
   </button>
-);
+)
 
 const Avatar = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => (
   <div
     className={`rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-white font-semibold flex items-center justify-center ${
@@ -58,19 +60,38 @@ const Avatar = ({
   >
     {children}
   </div>
-);
+)
 
 const AvatarFallback = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => (
   <div className={`w-full h-full flex items-center justify-center ${className || ''}`}>
     {children}
   </div>
-);
+)
+
+// Component for rendering authenticated user's avatar with fallback
+const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  return (
+    <Image
+      src={imgSrc}
+      alt={name}
+      width={40}
+      height={40}
+      className="rounded-full h-8 w-8 sm:h-10 sm:w-10 object-cover"
+      onError={() =>
+        setImgSrc(
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=40`
+        )
+      }
+    />
+  )
+}
 
 // Dynamic department translation keys
 const departmentTitles: Record<string, string> = {
@@ -78,39 +99,59 @@ const departmentTitles: Record<string, string> = {
   design: 'departments.design',
   'project-manager': 'departments.projectManager',
   marketing: 'departments.marketing',
-};
+}
 
 interface Employee {
-  id: string;
-  name: string;
-  title: string;
-  avatar: string;
-  type: string;
-  status: string;
+  id: string
+  name: string
+  title: string
+  avatar: string
+  type: string
+  status: string
 }
 
 const DepartmentDetail = () => {
-  const { t } = useTranslation();
-  const { theme } = useTheme();
-  const params = useParams();
-  const slug = (params.department as string)?.toLowerCase();
-  const department = t(departmentTitles[slug] || 'departments.default');
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+  const { user } = useAuth()
+  const params = useParams()
+  const slug = (params.department as string)?.toLowerCase()
+  const department = t(departmentTitles[slug] || 'departments.default')
 
-  const isDarkMode =
+  const [isDarkMode, setIsDarkMode] = useState(
     theme === 'dark' ||
     (theme === 'auto' &&
       typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
+      window.matchMedia('(prefers-color-scheme: dark)').matches)
+  )
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showFilter, setShowFilter] = useState(false);
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const itemsPerPage = 10;
+  useEffect(() => {
+    setIsDarkMode(
+      theme === 'dark' ||
+      (theme === 'auto' &&
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches)
+    )
+  }, [theme])
 
-  // Dummy Employee Data
-  const employees: Employee[] = [
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [showFilter, setShowFilter] = useState(false)
+  const [typeFilter, setTypeFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [showAddEmployee, setShowAddEmployee] = useState(false)
+  const [showViewEmployee, setShowViewEmployee] = useState(false)
+  const [showUpdateEmployee, setShowUpdateEmployee] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  const [employeeForm, setEmployeeForm] = useState({
+    employeeId: '',
+    employeeName: '',
+    designation: '',
+    type: 'Office',
+    status: 'Permanent',
+  })
+  const [employees, setEmployees] = useState<Employee[]>([
     {
       id: '345321231',
       name: 'Darlene Robertson',
@@ -143,31 +184,98 @@ const DepartmentDetail = () => {
       type: 'remote',
       status: 'permanent',
     },
-  ];
+  ])
+  const itemsPerPage = 10
 
   const getInitials = (name: string) => {
-    const words = name.trim().split(' ');
+    const words = name.trim().split(' ')
     return words.length >= 2
       ? `${words[0][0]}${words[1][0]}`.toUpperCase()
-      : words[0].slice(0, 2).toUpperCase();
-  };
+      : words[0].slice(0, 2).toUpperCase()
+  }
 
   // Filters
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter ? emp.type === typeFilter : true;
-    const matchesStatus = statusFilter ? emp.status === statusFilter : true;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+      emp.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = typeFilter ? emp.type === typeFilter : true
+    const matchesStatus = statusFilter ? emp.status === statusFilter : true
+    return matchesSearch && matchesType && matchesStatus
+  })
 
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedEmployees = filteredEmployees.slice(
     startIndex,
     startIndex + itemsPerPage
-  );
+  )
+
+  const handleEmployeeChange = (e) => {
+    const { name, value } = e.target
+    setEmployeeForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAddEmployeeSubmit = (e) => {
+    e.preventDefault()
+    setEmployees((prev) => [
+      ...prev,
+      {
+        id: employeeForm.employeeId,
+        name: employeeForm.employeeName,
+        title: employeeForm.designation,
+        avatar: '',
+        type: employeeForm.type.toLowerCase(),
+        status: employeeForm.status.toLowerCase(),
+      },
+    ])
+    setShowAddEmployee(false)
+    setEmployeeForm({ employeeId: '', employeeName: '', designation: '', type: 'Office', status: 'Permanent' })
+  }
+
+  const handleUpdateEmployeeChange = (e) => {
+    const { name, value } = e.target
+    setEmployeeForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleUpdateEmployeeSubmit = (e) => {
+    e.preventDefault()
+    if (selectedEmployee) {
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === selectedEmployee.id
+            ? { ...emp, ...employeeForm, title: employeeForm.designation }
+            : emp
+        )
+      )
+      setShowUpdateEmployee(false)
+      setSelectedEmployee(null)
+    }
+  }
+
+  const handleDeleteEmployee = () => {
+    if (selectedEmployee) {
+      setEmployees((prev) => prev.filter((emp) => emp.id !== selectedEmployee.id))
+      setShowDeleteConfirm(false)
+      setSelectedEmployee(null)
+    }
+  }
+
+  const handleViewEmployee = (emp: Employee) => {
+    setSelectedEmployee(emp)
+    setShowViewEmployee(true)
+  }
+
+  const handleUpdateEmployee = (emp: Employee) => {
+    setSelectedEmployee(emp)
+    setEmployeeForm({ employeeId: emp.id, employeeName: emp.name, designation: emp.title, type: emp.type, status: emp.status })
+    setShowUpdateEmployee(true)
+  }
+
+  const handleDeleteConfirm = (emp: Employee) => {
+    setSelectedEmployee(emp)
+    setShowDeleteConfirm(true)
+  }
 
   return (
     <div
@@ -227,17 +335,18 @@ const DepartmentDetail = () => {
               </Button>
               <div
                 className="flex items-center space-x-2 sm:space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 sm:px-3 py-2"
-                aria-label={t('role.hrManager')}
+                aria-label={user?.role || t('role.hrManager')}
               >
-                <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                  <AvatarFallback>RA</AvatarFallback>
-                </Avatar>
+                <EmployeeAvatar
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=40`}
+                  name={user?.fullName || 'User'}
+                />
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    Robert Allen
+                    {user?.fullName || 'User'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t('role.hrManager')}
+                    {user?.role || t('role.hrManager')}
                   </p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-400" />
@@ -261,7 +370,10 @@ const DepartmentDetail = () => {
             />
           </div>
           <div className="flex items-center space-x-3 relative">
-            <Button className="bg-purple-600 text-white hover:bg-purple-700 flex items-center space-x-2 px-3 sm:px-4 py-2">
+            <Button
+              onClick={() => setShowAddEmployee(true)}
+              className="bg-purple-600 text-white hover:bg-purple-700 flex items-center space-x-2 px-3 sm:px-4 py-2"
+            >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('employees.addNew')}</span>
               <span className="sm:hidden">{t('employees.add')}</span>
@@ -287,29 +399,329 @@ const DepartmentDetail = () => {
                     onChange={(e) => setTypeFilter(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
                   >
-                    <option value="">{t('common.all')}</option>
-                    <option value="office">{t('employees.types.office')}</option>
-                    <option value="remote">{t('employees.types.remote')}</option>
+                    <option value="">All</option>
+                    <option value="office">office</option>
+                    <option value="remote">remote</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium dark:text-gray-300">
-                    {t('employees.status.label')}
+                    Status
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
                   >
-                    <option value="">{t('common.all')}</option>
-                    <option value="permanent">{t('employees.status.permanent')}</option>
-                    {/* Add more statuses here */}
+                    <option value="">All</option>
+                    <option value="permanent">Permanent</option>
+                    <option value="contract">Contract</option>
                   </select>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Add New Employee Form */}
+        {showAddEmployee && (
+          <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${isDarkMode ? 'dark:bg-opacity-75' : ''}`}>
+            <div className={`bg-${isDarkMode ? 'gray-800' : 'white'} p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:shadow-gray-900' : 'shadow-gray-200'}`}>
+              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Add New Employee</h2>
+              <form onSubmit={handleAddEmployeeSubmit} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.employeeID')}
+                  </label>
+                  <input
+                    type="text"
+                    name="employeeId"
+                    value={employeeForm.employeeId}
+                    onChange={handleEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.employeeName')}
+                  </label>
+                  <input
+                    type="text"
+                    name="employeeName"
+                    value={employeeForm.employeeName}
+                    onChange={handleEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.designation')}
+                  </label>
+                  <input
+                    type="text"
+                    name="designation"
+                    value={employeeForm.designation}
+                    onChange={handleEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.type')}
+                  </label>
+                  <div className="mt-1 flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="Office"
+                        checked={employeeForm.type === 'Office'}
+                        onChange={handleEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.types.office')}</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="Remote"
+                        checked={employeeForm.type === 'Remote'}
+                        onChange={handleEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.types.remote')}</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.status')}
+                  </label>
+                  <div className="mt-1 flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Permanent"
+                        checked={employeeForm.status === 'Permanent'}
+                        onChange={handleEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.status.permanent')}</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Contract"
+                        checked={employeeForm.status === 'Contract'}
+                        onChange={handleEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.status.contract')}</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-4 mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setShowAddEmployee(false)}
+                    className={`text-${isDarkMode ? 'gray-300 hover:text-white' : 'gray-700 hover:text-gray-900'} border ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} px-4 py-2 rounded-md`}
+                  >
+                    {t('employees.cancel')}
+                  </Button>
+                  <Button
+                    type="submit"
+                    className={`bg-${isDarkMode ? 'purple-600' : 'purple-600'} text-white hover:bg-${isDarkMode ? 'purple-700' : 'purple-700'} px-4 py-2 rounded-md`}
+                  >
+                    {t('employees.apply')}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Employee Modal */}
+        {showViewEmployee && selectedEmployee && (
+          <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${isDarkMode ? 'dark:bg-opacity-75' : ''}`}>
+            <div className={`bg-${isDarkMode ? 'gray-800' : 'white'} p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:shadow-gray-900' : 'shadow-gray-200'}`}>
+              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>{t('employees.actions.view')}</h2>
+              <div className="space-y-4">
+                <p><strong>{t('employees.table.employeeID')}:</strong> {selectedEmployee.id}</p>
+                <p><strong>{t('employees.table.employeeName')}:</strong> {selectedEmployee.name}</p>
+                <p><strong>{t('employees.table.designation')}:</strong> {selectedEmployee.title}</p>
+                <p><strong>{t('employees.table.type')}:</strong> {t(`employees.types.${selectedEmployee.type}`)}</p>
+                <p><strong>{t('employees.table.status')}:</strong> {t(`employees.status.${selectedEmployee.status}`)}</p>
+              </div>
+              <div className="flex justify-end space-x-4 mt-4">
+                <Button
+                  type="button"
+                  onClick={() => { setShowViewEmployee(false); setSelectedEmployee(null); }}
+                  className={`text-${isDarkMode ? 'gray-300 hover:text-white' : 'gray-700 hover:text-gray-900'} border ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} px-4 py-2 rounded-md`}
+                >
+                  {t('Close')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Employee Form */}
+        {showUpdateEmployee && selectedEmployee && (
+          <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${isDarkMode ? 'dark:bg-opacity-75' : ''}`}>
+            <div className={`bg-${isDarkMode ? 'gray-800' : 'white'} p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:shadow-gray-900' : 'shadow-gray-200'}`}>
+              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>{t('employees.actions.edit')}</h2>
+              <form onSubmit={handleUpdateEmployeeSubmit} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.employeeID')}
+                  </label>
+                  <input
+                    type="text"
+                    name="employeeId"
+                    value={employeeForm.employeeId}
+                    onChange={handleUpdateEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    placeholder={t('employees.enterEmployeeID')}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.employeeName')}
+                  </label>
+                  <input
+                    type="text"
+                    name="employeeName"
+                    value={employeeForm.employeeName}
+                    onChange={handleUpdateEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    placeholder={t('employees.enterEmployeeName')}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.designation')}
+                  </label>
+                  <input
+                    type="text"
+                    name="designation"
+                    value={employeeForm.designation}
+                    onChange={handleUpdateEmployeeChange}
+                    className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    placeholder={t('employees.enterDesignation')}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.type')}
+                  </label>
+                  <div className="mt-1 flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="Office"
+                        checked={employeeForm.type === 'Office'}
+                        onChange={handleUpdateEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.types.office')}</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="Remote"
+                        checked={employeeForm.type === 'Remote'}
+                        onChange={handleUpdateEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.types.remote')}</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('employees.table.status')}
+                  </label>
+                  <div className="mt-1 flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Permanent"
+                        checked={employeeForm.status === 'Permanent'}
+                        onChange={handleUpdateEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.status.permanent')}</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Contract"
+                        checked={employeeForm.status === 'Contract'}
+                        onChange={handleUpdateEmployeeChange}
+                        className={`form-radio ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} focus:ring-${isDarkMode ? 'purple-400' : 'purple-500'}`}
+                      />
+                      <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('employees.status.contract')}</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-4 mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => { setShowUpdateEmployee(false); setSelectedEmployee(null); }}
+                    className={`text-${isDarkMode ? 'gray-300 hover:text-white' : 'gray-700 hover:text-gray-900'} border ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} px-4 py-2 rounded-md`}
+                  >
+                    {t('employees.cancel')}
+                  </Button>
+                  <Button
+                    type="submit"
+                    className={`bg-${isDarkMode ? 'purple-600' : 'purple-600'} text-white hover:bg-${isDarkMode ? 'purple-700' : 'purple-700'} px-4 py-2 rounded-md`}
+                  >
+                    {t('update')}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && selectedEmployee && (
+          <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${isDarkMode ? 'dark:bg-opacity-75' : ''}`}>
+            <div className={`bg-${isDarkMode ? 'gray-800' : 'white'} p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:shadow-gray-900' : 'shadow-gray-200'}`}>
+              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>{t('employees.actions.delete')}</h2>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('deleteConfirmMessage', { name: name })}
+              </p>
+              <div className="flex justify-end space-x-4 mt-4">
+                <Button
+                  type="button"
+                  onClick={() => { setShowDeleteConfirm(false); setSelectedEmployee(null); }}
+                  className={`text-${isDarkMode ? 'gray-300 hover:text-white' : 'gray-700 hover:text-gray-900'} border ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} px-4 py-2 rounded-md`}
+                >
+                  {t('employees.cancel')}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDeleteEmployee}
+                  className={`bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-md`}
+                >
+                  {t('delete')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
@@ -376,18 +788,21 @@ const DepartmentDetail = () => {
                     <td className="px-4 sm:px-6 py-4 text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <button
+                          onClick={() => handleViewEmployee(emp)}
                           className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
                           aria-label={t('employees.actions.view')}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => handleUpdateEmployee(emp)}
                           className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
                           aria-label={t('employees.actions.edit')}
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => handleDeleteConfirm(emp)}
                           className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                           aria-label={t('employees.actions.delete')}
                         >
@@ -418,7 +833,7 @@ const DepartmentDetail = () => {
               disabled={currentPage === 1}
               className="border border-gray-300 dark:border-gray-700 px-3 py-1 rounded disabled:opacity-50"
             >
-              &lt;
+              {'<'}
             </Button>
             {[...Array(totalPages)].map((_, i) => (
               <Button
@@ -438,13 +853,13 @@ const DepartmentDetail = () => {
               disabled={currentPage === totalPages}
               className="border border-gray-300 dark:border-gray-700 px-3 py-1 rounded disabled:opacity-50"
             >
-              &gt;
+              {'>'}
             </Button>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DepartmentDetail;
+export default DepartmentDetail
