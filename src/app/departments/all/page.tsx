@@ -101,6 +101,43 @@ const departmentTitles: Record<string, string> = {
   marketing: 'departments.marketing',
 }
 
+// Interface for API employee data
+interface ApiEmployee {
+  id: string
+  personal: {
+    firstName: string
+    lastName: string
+    mobileNumber: string
+    emailAddress: string
+    dateOfBirth: string
+    maritalStatus: string
+    gender: string
+    nationality: string
+    address: string
+    city: string
+    state: string
+    zipCode: string
+  }
+  professional: {
+    employeeID: string
+    userName: string
+    employeeType: string
+    emailAddress: string
+    department: string
+    designation: string
+    joiningDate: string
+    officeLocation: string
+  }
+  photo?: string
+  documents?: { name: string; url: string }[]
+  accountAccess?: {
+    emailAddress: string
+    slackId: string
+    skypeId: string
+    githubId: string
+  }
+}
+
 interface Employee {
   id: string
   name: string
@@ -151,41 +188,76 @@ const DepartmentDetail = () => {
     type: 'Office',
     status: 'Permanent',
   })
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: '345321231',
-      name: 'Darlene Robertson',
-      title: t('employees.roles.leadUIUXDesigner'),
-      avatar: '',
-      type: 'office',
-      status: 'permanent',
-    },
-    {
-      id: '987890345',
-      name: 'Floyd Miles',
-      title: t('employees.roles.leadUIUXDesigner'),
-      avatar: '',
-      type: 'office',
-      status: 'permanent',
-    },
-    {
-      id: '453367122',
-      name: 'Cody Fisher',
-      title: t('employees.roles.srUIUXDesigner'),
-      avatar: '',
-      type: 'office',
-      status: 'permanent',
-    },
-    {
-      id: '999999999',
-      name: 'Dianne Russell',
-      title: t('employees.roles.srUIUXDesigner'),
-      avatar: '',
-      type: 'remote',
-      status: 'permanent',
-    },
-  ])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+
   const itemsPerPage = 10
+
+  // Fetch employees from API
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch('/api/employees')
+        if (!response.ok) {
+          throw new Error('Failed to fetch employees')
+        }
+        const data: ApiEmployee[] = await response.json()
+        const transformedEmployees = data
+          .filter((emp) => emp.professional.department.toLowerCase() === slug)
+          .map((emp) => ({
+            id: emp.professional.employeeID || emp.id,
+            name: `${emp.personal.firstName} ${emp.personal.lastName}`.trim() || 'Unknown',
+            title: emp.professional.designation || 'N/A',
+            avatar: emp.photo || '',
+            type: emp.professional.employeeType || 'office',
+            status: 'permanent', // Default status, as API doesn't provide one
+          }))
+        setEmployees(transformedEmployees)
+      } catch (error) {
+        console.error('Error fetching employees:', error)
+        // Fallback to static data if API fails
+        setEmployees([
+          {
+            id: '345321231',
+            name: 'Darlene Robertson',
+            title: t('employees.roles.leadUIUXDesigner'),
+            avatar: '',
+            type: 'office',
+            status: 'permanent',
+          },
+          {
+            id: '987890345',
+            name: 'Floyd Miles',
+            title: t('employees.roles.leadUIUXDesigner'),
+            avatar: '',
+            type: 'office',
+            status: 'permanent',
+          },
+          {
+            id: '453367122',
+            name: 'Cody Fisher',
+            title: t('employees.roles.srUIUXDesigner'),
+            avatar: '',
+            type: 'office',
+            status: 'permanent',
+          },
+          {
+            id: '999999999',
+            name: 'Dianne Russell',
+            title: t('employees.roles.srUIUXDesigner'),
+            avatar: '',
+            type: 'remote',
+            status: 'permanent',
+          },
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEmployees()
+  }, [slug, t])
 
   const getInitials = (name: string) => {
     const words = name.trim().split(' ')
@@ -211,53 +283,104 @@ const DepartmentDetail = () => {
     startIndex + itemsPerPage
   )
 
-  const handleEmployeeChange = (e) => {
+  // Fixed: Explicitly type the event parameter
+  const handleEmployeeChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLInputElement>
+  ) => {
     const { name, value } = e.target
     setEmployeeForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleAddEmployeeSubmit = (e) => {
+  const handleAddEmployeeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setEmployees((prev) => [
-      ...prev,
-      {
-        id: employeeForm.employeeId,
-        name: employeeForm.employeeName,
-        title: employeeForm.designation,
-        avatar: '',
-        type: employeeForm.type.toLowerCase(),
-        status: employeeForm.status.toLowerCase(),
-      },
-    ])
-    setShowAddEmployee(false)
-    setEmployeeForm({ employeeId: '', employeeName: '', designation: '', type: 'Office', status: 'Permanent' })
-  }
-
-  const handleUpdateEmployeeChange = (e) => {
-    const { name, value } = e.target
-    setEmployeeForm((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleUpdateEmployeeSubmit = (e) => {
-    e.preventDefault()
-    if (selectedEmployee) {
-      setEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === selectedEmployee.id
-            ? { ...emp, ...employeeForm, title: employeeForm.designation }
-            : emp
-        )
-      )
-      setShowUpdateEmployee(false)
-      setSelectedEmployee(null)
+    try {
+      // Post to API
+      const response = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: employeeForm.employeeName.split(' ')[0] || '',
+          lastName: employeeForm.employeeName.split(' ').slice(1).join(' ') || '',
+          employeeID: employeeForm.employeeId,
+          designation: employeeForm.designation,
+          employeeType: employeeForm.type.toLowerCase(),
+          department: slug,
+          emailAddress: '',
+          mobileNumber: '',
+          dateOfBirth: '',
+          maritalStatus: '',
+          gender: '',
+          nationality: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          userName: employeeForm.employeeName.toLowerCase().replace(/\s+/g, '.'),
+          joiningDate: '',
+          officeLocation: '',
+        }),
+      })
+      if (response.ok) {
+        const { id } = await response.json()
+        setEmployees((prev) => [
+          ...prev,
+          {
+            id: employeeForm.employeeId || id,
+            name: employeeForm.employeeName,
+            title: employeeForm.designation,
+            avatar: '',
+            type: employeeForm.type.toLowerCase(),
+            status: employeeForm.status.toLowerCase(),
+          },
+        ])
+        setShowAddEmployee(false)
+        setEmployeeForm({ employeeId: '', employeeName: '', designation: '', type: 'Office', status: 'Permanent' })
+      } else {
+        throw new Error('Failed to add employee')
+      }
+    } catch (error) {
+      console.error('Error adding employee:', error)
     }
   }
 
-  const handleDeleteEmployee = () => {
+  // Fixed: Explicitly type the event parameter
+  const handleUpdateEmployeeChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLInputElement>
+  ) => {
+    const { name, value } = e.target
+    setEmployeeForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleUpdateEmployeeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (selectedEmployee) {
-      setEmployees((prev) => prev.filter((emp) => emp.id !== selectedEmployee.id))
-      setShowDeleteConfirm(false)
-      setSelectedEmployee(null)
+      try {
+        // Simulate update (API doesn't have PUT endpoint yet)
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.id === selectedEmployee.id
+              ? { ...emp, ...employeeForm, title: employeeForm.designation }
+              : emp
+          )
+        )
+        setShowUpdateEmployee(false)
+        setSelectedEmployee(null)
+      } catch (error) {
+        console.error('Error updating employee:', error)
+      }
+    }
+  }
+
+  const handleDeleteEmployee = async () => {
+    if (selectedEmployee) {
+      try {
+        // Simulate delete (API doesn't have DELETE endpoint yet)
+        setEmployees((prev) => prev.filter((emp) => emp.id !== selectedEmployee.id))
+        setShowDeleteConfirm(false)
+        setSelectedEmployee(null)
+      } catch (error) {
+        console.error('Error deleting employee:', error)
+      }
     }
   }
 
@@ -439,7 +562,7 @@ const DepartmentDetail = () => {
                     value={employeeForm.employeeId}
                     onChange={handleEmployeeChange}
                     className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
-                    
+                    placeholder={t('employees.enterEmployeeID')}
                   />
                 </div>
                 <div>
@@ -452,7 +575,7 @@ const DepartmentDetail = () => {
                     value={employeeForm.employeeName}
                     onChange={handleEmployeeChange}
                     className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
-                    
+                    placeholder={t('employees.enterEmployeeName')}
                   />
                 </div>
                 <div>
@@ -465,7 +588,7 @@ const DepartmentDetail = () => {
                     value={employeeForm.designation}
                     onChange={handleEmployeeChange}
                     className={`mt-1 block w-full rounded-md border ${isDarkMode ? 'border-gray-700 bg-gray-900 text-white' : 'border-gray-300 bg-white text-black'} p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500`}
-                    
+                    placeholder={t('employees.enterDesignation')}
                   />
                 </div>
                 <div>
@@ -564,7 +687,7 @@ const DepartmentDetail = () => {
                   onClick={() => { setShowViewEmployee(false); setSelectedEmployee(null); }}
                   className={`text-${isDarkMode ? 'gray-300 hover:text-white' : 'gray-700 hover:text-gray-900'} border ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} px-4 py-2 rounded-md`}
                 >
-                  {t('Close')}
+                  {t('employees.cancel')}
                 </Button>
               </div>
             </div>
@@ -687,7 +810,7 @@ const DepartmentDetail = () => {
                     type="submit"
                     className={`bg-${isDarkMode ? 'purple-600' : 'purple-600'} text-white hover:bg-${isDarkMode ? 'purple-700' : 'purple-700'} px-4 py-2 rounded-md`}
                   >
-                    {t('update')}
+                    {t('employees.update')}
                   </Button>
                 </div>
               </form>
@@ -701,7 +824,7 @@ const DepartmentDetail = () => {
             <div className={`bg-${isDarkMode ? 'gray-800' : 'white'} p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:shadow-gray-900' : 'shadow-gray-200'}`}>
               <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>{t('employees.actions.delete')}</h2>
               <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {t('deleteConfirmMessage', { name: name })}
+                {t('deleteConfirmMessage', { name: selectedEmployee.name })}
               </p>
               <div className="flex justify-end space-x-4 mt-4">
                 <Button
@@ -716,7 +839,7 @@ const DepartmentDetail = () => {
                   onClick={handleDeleteEmployee}
                   className={`bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-md`}
                 >
-                  {t('delete')}
+                  {t('employees.delete')}
                 </Button>
               </div>
             </div>
@@ -746,7 +869,16 @@ const DepartmentDetail = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedEmployees.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    Loading employees...
+                  </td>
+                </tr>
+              ) : paginatedEmployees.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}

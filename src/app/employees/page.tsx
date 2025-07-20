@@ -8,18 +8,19 @@ import EmployeeProfile from '@/components/EmployeeProfile'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/components/AuthContext'
 
+// Updated LocalEmployee type to make fields optional
 type LocalEmployee = {
   id: number
-  employeeId: string
-  firstName: string
-  lastName: string
-  fullName: string
-  email: string
-  mobileNumber: string
-  department: string
-  designation: string
-  employeeType: string
-  status: string
+  employeeId?: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  email?: string
+  mobileNumber?: string
+  department?: string
+  designation?: string
+  employeeType?: string
+  status?: string
   profileImage?: string
 }
 
@@ -62,13 +63,13 @@ const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
   return (
     <Image
       src={imgSrc}
-      alt={name}
+      alt={name || 'Unknown'}
       width={32}
       height={32}
       className="rounded-full object-cover"
       onError={() =>
         setImgSrc(
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=32`
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=6b7280&color=fff&size=32`
         )
       }
     />
@@ -76,14 +77,19 @@ const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
 }
 
 const transformLocalEmployee = (localEmployee: LocalEmployee): Employee => {
+  // Fallback values for missing properties
+  const firstName = localEmployee.firstName || ''
+  const lastName = localEmployee.lastName || ''
+  const fullName = localEmployee.fullName || `${firstName} ${lastName}`.trim() || 'Unknown'
+
   return {
-    id: localEmployee.id % 1000000,
-    name: localEmployee.fullName,
-    employeeId: localEmployee.employeeId,
-    department: localEmployee.department,
-    designation: localEmployee.designation,
+    id: localEmployee.id, // Removed modulo to avoid duplicate keys
+    name: fullName,
+    employeeId: localEmployee.employeeId || 'N/A',
+    department: localEmployee.department || 'N/A',
+    designation: localEmployee.designation || 'N/A',
     type: localEmployee.employeeType === 'remote' ? 'Work from Home' : 'Office',
-    status: localEmployee.status,
+    status: localEmployee.status || 'N/A',
     avatar: localEmployee.profileImage || 'https://via.placeholder.com/32',
     personalInfo: {
       dateOfBirth: 'N/A',
@@ -94,16 +100,16 @@ const transformLocalEmployee = (localEmployee: LocalEmployee): Employee => {
       country: 'N/A',
       maritalStatus: 'N/A',
       nationality: 'N/A',
-      email: localEmployee.email,
-      phone: localEmployee.mobileNumber,
+      email: localEmployee.email || 'N/A',
+      phone: localEmployee.mobileNumber || 'N/A',
     },
     professionalInfo: {
-      employeeId: localEmployee.employeeId,
-      userName: `${localEmployee.firstName.toLowerCase()}.${localEmployee.lastName.toLowerCase()}`,
-      employeeType: localEmployee.employeeType,
-      emailAddress: localEmployee.email,
-      department: localEmployee.department,
-      designation: localEmployee.designation,
+      employeeId: localEmployee.employeeId || 'N/A',
+      userName: firstName || lastName ? `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\.+$/, '') : 'unknown.user',
+      employeeType: localEmployee.employeeType || 'N/A',
+      emailAddress: localEmployee.email || 'N/A',
+      department: localEmployee.department || 'N/A',
+      designation: localEmployee.designation || 'N/A',
       workingDays: 'Monday - Friday',
       joiningDate: 'N/A',
       officeLocation: localEmployee.employeeType === 'remote' ? 'Remote' : 'Office',
@@ -141,7 +147,15 @@ const EmployeeTable = () => {
     const fetchEmployees = () => {
       setLoading(true)
       const localData: LocalEmployee[] = JSON.parse(localStorage.getItem('employees') || '[]')
-      const transformedEmployees = localData.map(transformLocalEmployee)
+      // Validate data before transformation
+      const validLocalData = localData.filter((emp) => {
+        if (!emp.id || !emp.employeeId || !emp.fullName || !emp.email || !emp.mobileNumber || !emp.department || !emp.designation || !emp.employeeType || !emp.status) {
+          console.warn('Invalid employee data:', emp)
+          return false
+        }
+        return true
+      })
+      const transformedEmployees = validLocalData.map(transformLocalEmployee)
       setEmployees(transformedEmployees)
       setLoading(false)
     }
@@ -268,8 +282,8 @@ const EmployeeTable = () => {
         ? {
             id: updatedEmployee.id,
             employeeId: updatedEmployee.employeeId,
-            firstName: updatedEmployee.name.split(' ')[0],
-            lastName: updatedEmployee.name.split(' ').slice(1).join(' '),
+            firstName: updatedEmployee.name.split(' ')[0] || '',
+            lastName: updatedEmployee.name.split(' ').slice(1).join(' ') || '',
             fullName: updatedEmployee.name,
             email: updatedEmployee.personalInfo.email,
             mobileNumber: updatedEmployee.personalInfo.phone,
@@ -371,7 +385,7 @@ const EmployeeTable = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="relative w-full sm:w-64">
-            <Search className="previous left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder={t('header.searchPlaceholder')}
@@ -494,7 +508,7 @@ const EmployeeTable = () => {
                   </button>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                  {t('employees.deleteConfirmMessage', { name: employeeToDelete?.name })}
+                  {t('employees.deleteConfirmMessage', { name: employeeToDelete?.name || 'Unknown' })}
                 </p>
                 <div className="flex justify-end gap-3">
                   <button
@@ -685,7 +699,7 @@ const EmployeeTable = () => {
                               : 'bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-300'
                           }`}
                         >
-                          {t(`employees.status.${emp.status.toLowerCase()}`, emp.status)}
+                          {t(`employees.status.${emp.status.toLowerCase()}`, emp.status || 'Unknown')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -765,7 +779,7 @@ const EmployeeTable = () => {
                             : 'bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-300'
                         }`}
                       >
-                        {t(`employees.status.${emp.status.toLowerCase()}`, emp.status)}
+                        {t(`employees.status.${emp.status.toLowerCase()}`, emp.status || 'Unknown')}
                       </p>
                     </div>
                   </div>
