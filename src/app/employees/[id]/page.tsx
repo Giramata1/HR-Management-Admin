@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { Employee } from '@/types/employee' // Adjust path if needed
 
-// --- FAKE API for getting a single employee from localStorage ---
+
 const fakeApi = {
   getEmployeeById: async (employeeId: string): Promise<Employee | null> => {
     console.log(`FAKE API (Profile): Fetching employee with ID: ${employeeId}`);
@@ -20,7 +20,8 @@ const fakeApi = {
       if (!storedEmployees) return null;
       
       const employees: Employee[] = JSON.parse(storedEmployees);
-      const employee = employees.find(emp => emp.id === employeeId);
+      // Use String() for a safe comparison in case one ID is a number and the other is a string
+      const employee = employees.find(emp => String(emp.id) === String(employeeId));
       
       return employee || null;
     } catch (error) {
@@ -176,7 +177,7 @@ export default function EmployeeProfilePage() {
                                     )}
                                     {activeInfoTab === 'professional' && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                            <InfoField label="Employee ID" value={employee.id} />
+                                            <InfoField label="Employee ID" value={String(employee.id)} />
                                             <InfoField label="User Name" value={professionalInfo?.userName} />
                                             <InfoField label="Employee Type" value={professionalInfo?.employeeType} />
                                             <InfoField label="Email Address" value={professionalInfo?.emailAddress} />
@@ -189,8 +190,11 @@ export default function EmployeeProfilePage() {
                                     )}
                                     {activeInfoTab === 'documents' && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {documents && documents.length > 0 ? documents.map(doc => (
-                                                <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            {documents && documents.length > 0 ? documents.map((doc, index) => (
+                                                // *** THE FIX IS APPLIED HERE ***
+                                                // Changed `key={doc.id}` to `key={`${doc.fileName}-${index}`}`
+                                                // This uses a value that exists on the 'doc' object for a unique key.
+                                                <div key={`${doc.fileName}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
                                                     <div className="flex items-center gap-3">
                                                         <FileText className="w-5 h-5 text-purple-600"/>
                                                         <span className="text-sm font-medium">{doc.fileName}</span>
