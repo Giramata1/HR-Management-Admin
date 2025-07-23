@@ -5,47 +5,17 @@ import Image from 'next/image'
 import { ChevronDown, Calendar, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
+// REMOVED: No longer need axios for this fake implementation
+// import axios from 'axios'
 
-// Employee type definition
-type Employee = {
-  id: number
-  name: string
-  employeeId: string
-  department: string
-  designation: string
-  type: string
-  status: string
-  avatar: string
-  personalInfo: {
-    dateOfBirth: string
-    gender: string
-    address: string
-    city: string
-    zipCode: string
-    country: string
-    maritalStatus: string
-    nationality: string
-    email: string
-    phone: string
-  }
-  professionalInfo: {
-    employeeId: string
-    userName: string
-    employeeType: string
-    emailAddress: string
-    department: string
-    designation: string
-    workingDays: string
-    joiningDate: string
-    officeLocation: string
-  }
-}
+// --- TYPE DEFINITIONS ---
 
+// The data structure for the form itself
 type PersonalFormData = {
   firstName: string
   lastName: string
   mobileNumber: string
-  emailAddress: string
+  email: string
   dateOfBirth: string
   maritalStatus: string
   gender: string
@@ -55,6 +25,58 @@ type PersonalFormData = {
   state: string
   zipCode: string
 }
+
+// A simple Employee type to store in our fake database (localStorage)
+type Employee = {
+  id: string
+  profileImage: string | null
+  personalInfo: PersonalFormData
+  status: 'active' | 'inactive'
+}
+
+// --- FAKE API using localStorage (Embedded in this file) ---
+
+const fakeApi = {
+  /**
+   * Retrieves all employees from the browser's localStorage.
+   */
+  getEmployees: (): Employee[] => {
+    // Using a try-catch block is safe practice for localStorage parsing
+    try {
+      const storedEmployees = localStorage.getItem('employees');
+      return storedEmployees ? JSON.parse(storedEmployees) : [];
+    } catch (error) {
+      console.error("Failed to parse employees from localStorage:", error);
+      return []; // Return empty array on failure
+    }
+  },
+
+  /**
+   * Adds a new employee to localStorage.
+   * Simulates a network delay to show the "Submitting..." state.
+   */
+  addEmployee: async (formData: PersonalFormData, profileImage: string | null): Promise<Employee> => {
+    console.log("FAKE API: Simulating adding a new employee...");
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate 1-second delay
+
+    const employees = fakeApi.getEmployees();
+
+    const newEmployee: Employee = {
+      id: `EMP-${Date.now()}`, // Create a simple unique ID
+      personalInfo: formData,
+      profileImage: profileImage,
+      status: 'active', // Set a default status
+    };
+
+    const updatedEmployees = [...employees, newEmployee];
+    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
+
+    console.log("FAKE API: Employee successfully saved to localStorage.", newEmployee);
+    return newEmployee;
+  }
+};
+
+// --- COMPONENT PROPS & DEFAULTS ---
 
 type Props = {
   profileImage?: string | null
@@ -67,32 +89,27 @@ type Props = {
 }
 
 const defaultFormData: PersonalFormData = {
-  firstName: '',
-  lastName: '',
-  mobileNumber: '',
-  emailAddress: '',
-  dateOfBirth: '',
-  maritalStatus: '',
-  gender: '',
-  nationality: '',
-  address: '',
-  city: '',
-  state: '',
-  zipCode: '',
+  firstName: '', lastName: '', mobileNumber: '', email: '',
+  dateOfBirth: '', maritalStatus: '', gender: '', nationality: '',
+  address: '', city: '', state: '', zipCode: '',
 }
+
+// --- MAIN COMPONENT ---
 
 export default function PersonalForm({ profileImage, personalFormData, onCancel, onNext }: Props) {
   const { t } = useTranslation()
   const router = useRouter()
-  const [formData, setFormData] = useState(personalFormData || defaultFormData)
+
+  const [formData, setFormData] = useState<PersonalFormData>(personalFormData || defaultFormData)
   const [uploadedImage, setUploadedImage] = useState(profileImage || null)
   const [errors, setErrors] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear errors when user starts typing
     if (errors.length > 0) {
       setErrors([])
     }
@@ -106,34 +123,27 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
         return
       }
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string)
-      }
-      reader.onerror = () => {
-        setErrors(['Failed to read image file.'])
-      }
+      reader.onloadend = () => setUploadedImage(reader.result as string)
+      reader.onerror = () => setErrors(['Failed to read image file.'])
       reader.readAsDataURL(file)
     }
   }
 
   const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
+    fileInputRef.current?.click()
   }
 
   const validateForm = (): boolean => {
-    const requiredFields = ['firstName', 'lastName', 'emailAddress', 'mobileNumber']
-    const missingFields = requiredFields.filter((field) => !formData[field as keyof PersonalFormData])
-    
+    const requiredFields: (keyof PersonalFormData)[] = ['firstName', 'lastName', 'email', 'mobileNumber', 'dateOfBirth', 'gender', 'nationality', 'maritalStatus', 'address', 'city', 'state', 'zipCode']
+    const missingFields = requiredFields.filter((field) => !formData[field])
+
     if (missingFields.length > 0) {
-      setErrors([`Please fill in all required fields: ${missingFields.join(', ')}`])
+      setErrors([`Please fill in all required fields: ${missingFields.map(field => t(field) || field).join(', ')}`])
       return false
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.emailAddress)) {
+    if (!emailRegex.test(formData.email)) {
       setErrors(['Please enter a valid email address'])
       return false
     }
@@ -142,70 +152,42 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
     return true
   }
 
-  const handleNext = () => {
+  // --- MODIFIED FUNCTION TO USE THE FAKE API ---
+  const handleSubmit = async () => {
     if (!validateForm()) {
-      return
+      return // Stop submission if validation fails
     }
 
+    setIsSubmitting(true)
     try {
-      const transformedEmployee: Employee = {
-        id: Date.now(),
-        name: `${formData.firstName} ${formData.lastName}`,
-        employeeId: `EMP${(Math.floor(Math.random() * 10000) + 1).toString().padStart(4, '0')}`,
-        department: 'Engineering',
-        designation: 'Developer',
-        type: 'office',
-        status: 'active',
-        avatar: uploadedImage || 'https://via.placeholder.com/80',
-        personalInfo: {
-          dateOfBirth: formData.dateOfBirth || '',
-          gender: formData.gender || '',
-          address: formData.address || '',
-          city: formData.city || '',
-          zipCode: formData.zipCode || '',
-          country: formData.state || '',
-          maritalStatus: formData.maritalStatus || '',
-          nationality: formData.nationality || '',
-          email: formData.emailAddress || '',
-          phone: formData.mobileNumber || '',
-        },
-        professionalInfo: {
-          employeeId: `EMP${(Math.floor(Math.random() * 10000) + 1).toString().padStart(4, '0')}`,
-          userName: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}` || '',
-          employeeType: 'office',
-          emailAddress: formData.emailAddress || '',
-          department: 'Engineering',
-          designation: 'Developer',
-          workingDays: 'Monday-Friday',
-          joiningDate: new Date().toISOString().split('T')[0], // Current date
-          officeLocation: 'Head Office',
-        },
-      }
+      console.log("Submitting data to the FAKE API (localStorage):", formData);
 
-      console.log('Current formData:', formData)
-      console.log('Transformed Employee before saving:', transformedEmployee)
+      // Call the fake API instead of axios
+      await fakeApi.addEmployee(formData, uploadedImage);
 
-      const existingEmployees = JSON.parse(localStorage.getItem('employees') || '[]')
-      const updatedEmployees = [...existingEmployees, transformedEmployee]
-      localStorage.setItem('employees', JSON.stringify(updatedEmployees))
-      console.log('Saved to localStorage, employees array:', updatedEmployees)
+      console.log('Form data successfully saved to localStorage.');
 
       if (onNext) {
         onNext({ personalFormData: formData, profileImage: uploadedImage })
       } else {
-        router.push('/employees')
+        alert('Personal information submitted successfully!')
+        router.push('/employees'); // Redirect to the employee list
       }
+
     } catch (error) {
-      console.error('Error saving employee:', error)
-      setErrors(['Failed to save employee information. Please try again.'])
+      // This is unlikely to fail with localStorage unless storage is full or disabled
+      console.error('Error submitting form to FAKE API:', error);
+      setErrors(['An unexpected error occurred while saving locally.']);
+    } finally {
+      setIsSubmitting(false) // Reset submitting state
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow">
       <div className="mb-8" />
-      
-      {/* Profile Image Upload */}
+
+      {/* Profile Image Upload Section */}
       <div className="mb-8">
         <div
           className="w-24 h-24 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
@@ -232,7 +214,7 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
         />
       </div>
 
-      {/* Form Fields */}
+      {/* Form Fields Section (No changes needed here) */}
       <div className="space-y-6 mb-8">
         {/* Name Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -269,8 +251,8 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
           />
           <input
             type="email"
-            name="emailAddress"
-            value={formData.emailAddress}
+            name="email"
+            value={formData.email}
             onChange={handleInputChange}
             placeholder={t('emailAddress') || 'Email Address'}
             className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -278,7 +260,7 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
           />
         </div>
 
-        {/* Date and Marital Status */}
+        {/* Date of Birth and Marital Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <input
@@ -288,6 +270,7 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
               onChange={handleInputChange}
               placeholder={t('dateOfBirth') || 'Date of Birth'}
               className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             />
             <Calendar className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
           </div>
@@ -297,6 +280,7 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
               value={formData.maritalStatus}
               onChange={handleInputChange}
               className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             >
               <option value="" disabled hidden>{t('maritalStatus') || 'Marital Status'}</option>
               <option value="single">{t('single') || 'Single'}</option>
@@ -314,6 +298,7 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
               value={formData.gender}
               onChange={handleInputChange}
               className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             >
               <option value="" disabled hidden>{t('gender') || 'Gender'}</option>
               <option value="male">{t('gender.male') || 'Male'}</option>
@@ -327,17 +312,18 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
               value={formData.nationality}
               onChange={handleInputChange}
               className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             >
               <option value="" disabled hidden>{t('nationality') || 'Nationality'}</option>
-              <option value="rwandan">{t('nationality.rwandan') || 'Rwandan'}</option>
-              <option value="kenyan">{t('nationality.kenyan') || 'Kenyan'}</option>
-              <option value="ugandan">{t('nationality.ugandan') || 'Ugandan'}</option>
+              <option value="Rwandan">{t('nationality.rwandan') || 'Rwandan'}</option>
+              <option value="Kenyan">{t('nationality.kenyan') || 'Kenyan'}</option>
+              <option value="Ugandan">{t('nationality.ugandan') || 'Ugandan'}</option>
             </select>
             <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
           </div>
         </div>
 
-        {/* Address */}
+        {/* Address Field */}
         <div>
           <input
             type="text"
@@ -346,58 +332,50 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
             onChange={handleInputChange}
             placeholder={t('address') || 'Address'}
             className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
         </div>
 
         {/* Location Fields */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="relative">
-            <select
+            <input
+              type="text"
               name="city"
               value={formData.city}
               onChange={handleInputChange}
-              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="" disabled hidden>{t('city') || 'City'}</option>
-              <option value="kigali">{t('city.kigali') || 'Kigali'}</option>
-              <option value="musanze">{t('city.musanze') || 'Musanze'}</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              placeholder={t('city') || 'City'}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
           </div>
           <div className="relative">
-            <select
+            <input
+              type="text"
               name="state"
               value={formData.state}
               onChange={handleInputChange}
-              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="" disabled hidden>{t('state') || 'State/Province'}</option>
-              <option value="kigali city">{t('state.kigaliCity') || 'Kigali City'}</option>
-              <option value="northern province">{t('state.northernProvince') || 'Northern Province'}</option>
-              <option value="southern province">{t('state.southernProvince') || 'Southern Province'}</option>
-              <option value="eastern province">{t('state.easternProvince') || 'Eastern Province'}</option>
-              <option value="western province">{t('state.westernProvince') || 'Western Province'}</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              placeholder={t('state') || 'State/Province'}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
           </div>
           <div className="relative">
-            <select
+            <input
+              type="text"
               name="zipCode"
               value={formData.zipCode}
               onChange={handleInputChange}
-              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg appearance-none text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="" disabled hidden>{t('zipCode') || 'Zip Code'}</option>
-              <option value="00000">00000</option>
-              <option value="10001">10001</option>
-              <option value="10002">10002</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              placeholder={t('zipCode') || 'Zip Code'}
+              className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
           </div>
         </div>
       </div>
 
-      {/* Error Messages */}
+
+      {/* Error Messages Display */}
       {errors.length > 0 && (
         <div className="mb-6">
           {errors.map((error, index) => (
@@ -413,14 +391,16 @@ export default function PersonalForm({ profileImage, personalFormData, onCancel,
         <button
           onClick={onCancel || (() => router.push('/employees'))}
           className="px-6 py-3 text-gray-700 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          disabled={isSubmitting}
         >
           {t('addEmployee.buttons.cancel') || 'Cancel'}
         </button>
         <button
-          onClick={handleNext}
-          className="px-6 py-3 text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          onClick={handleSubmit}
+          className="px-6 py-3 text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+          disabled={isSubmitting}
         >
-          {t('addEmployee.buttons.next') || 'Next'}
+          {isSubmitting ? (t('submitting') || 'Submitting...') : (t('addEmployee.buttons.next') || 'Next')}
         </button>
       </div>
     </div>

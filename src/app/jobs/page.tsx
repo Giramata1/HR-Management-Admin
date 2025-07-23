@@ -1,11 +1,13 @@
-
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, MapPin, Plus, Briefcase, X, Bell, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/components/AuthContext'
 import Image from 'next/image'
+import axios from 'axios'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 // Component for rendering authenticated user's avatar with fallback
 const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
@@ -26,52 +28,110 @@ const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
   )
 }
 
+// Interface for API job data
+interface ApiJob {
+  id: number
+  jobTitle: string
+  jobDescription: string
+  departmentName: string
+  location: string
+  salary: number
+  jobType: string
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
+// Interface for UI job data
+interface Job {
+  id: number
+  title: string
+  company: string
+  location: string
+  salary: string
+  period: string
+  tags: string[]
+  status: string
+}
+
 const JobBoard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [newJob, setNewJob] = useState({
     title: '',
+    description: '',
     company: '',
     location: '',
     salary: '',
     workType: 'Office',
     jobType: 'Full Time',
-    tags: [] as string[],
-    status: 'Active', // New field to determine job status
+    status: 'Active',
   })
 
-  const [activeJobs, setActiveJobs] = useState([
-    { id: 1, title: t('jobs.uiuxDesigner', { defaultValue: 'UI/UX Designer' }), company: t('departments.design', { defaultValue: 'Design' }), location: 'California, USA', salary: '$3600', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.design', { defaultValue: 'Design' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' }), t('workTypes.remote', { defaultValue: 'Remote' })] },
-    { id: 2, title: t('jobs.srUxResearcher', { defaultValue: 'Sr. UX Researcher' }), company: t('departments.design', { defaultValue: 'Design' }), location: 'New York, USA', salary: '$1500', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.design', { defaultValue: 'Design' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-    { id: 3, title: t('jobs.bdm', { defaultValue: 'BDM' }), company: t('departments.sales', { defaultValue: 'Sales' }), location: 'New York, USA', salary: '$1000', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.sales', { defaultValue: 'Sales' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-    { id: 4, title: t('jobs.reactJs', { defaultValue: 'React JS' }), company: t('departments.developer', { defaultValue: 'Developer' }), location: 'New York, USA', salary: '$2000', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.developer', { defaultValue: 'Developer' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-  ])
+  // Use dynamic token from useAuth, fallback to provided token
+  const token = user?.token || 'eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9IUiIsInN1YiI6ImhybXMuaHJAZ21haWwuY29tIiwiaWF0IjoxNzUyOTg5NzcwLCJleHAiOjE3NTMwNzYxNzB9.BQdMwUQpiom1CA3doQuYI3US_E3WPmsOQqj9JBnXn98'
 
-  const [inactiveJobs, setInactiveJobs] = useState([
-    { id: 5, title: t('jobs.hrExecutive', { defaultValue: 'Hr Executive' }), company: t('departments.hr', { defaultValue: 'HR' }), location: 'California, USA', salary: '$3600', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.hr', { defaultValue: 'HR' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' }), t('workTypes.remote', { defaultValue: 'Remote' })] },
-    { id: 6, title: t('jobs.pythonDeveloper', { defaultValue: 'Python Developer' }), company: t('departments.developer', { defaultValue: 'Developer' }), location: 'New York, USA', salary: '$1500', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.developer', { defaultValue: 'Developer' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-  ])
-
-  const [completedJobs, setCompletedJobs] = useState([
-    { id: 7, title: t('jobs.uiuxDesigner', { defaultValue: 'UI/UX Designer' }), company: t('departments.design', { defaultValue: 'Design' }), location: 'California, USA', salary: '$3600', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.design', { defaultValue: 'Design' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' }), t('workTypes.remote', { defaultValue: 'Remote' })] },
-    { id: 8, title: t('jobs.srUxResearcher', { defaultValue: 'Sr. UX Researcher' }), company: t('departments.design', { defaultValue: 'Design' }), location: 'New York, USA', salary: '$1500', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.design', { defaultValue: 'Design' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-    { id: 9, title: t('jobs.bdm', { defaultValue: 'BDM' }), company: t('departments.sales', { defaultValue: 'Sales' }), location: 'New York, USA', salary: '$1000', period: t('period.month', { defaultValue: 'Month' }), tags: [t('departments.sales', { defaultValue: 'Sales' }), t('jobTypes.fullTime', { defaultValue: 'Full Time' })] },
-  ])
-
-  const departments = [t('departments.design', { defaultValue: 'Design' }), t('departments.developer', { defaultValue: 'Developer' }), t('departments.sales', { defaultValue: 'Sales' }), t('departments.hr', { defaultValue: 'HR' }), t('departments.marketing', { defaultValue: 'Marketing' }), t('departments.finance', { defaultValue: 'Finance' })]
+  const departments = [
+    t('departments.design', { defaultValue: 'Design' }),
+    t('departments.developer', { defaultValue: 'Developer' }),
+    t('departments.sales', { defaultValue: 'Sales' }),
+    t('departments.hr', { defaultValue: 'HR' }),
+    t('departments.marketing', { defaultValue: 'Marketing' }),
+    t('departments.finance', { defaultValue: 'Finance' }),
+  ]
   const locations = ['California, USA', 'New York, USA', 'Texas, USA', 'Florida, USA']
 
-  type Job = typeof activeJobs[number]
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setLoading(true)
+      try {
+        const response = await axios.get<ApiJob[]>('https://hr-management-system-pmfp.onrender.com/api/jobs', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
+          },
+        })
+        const transformedJobs: Job[] = response.data.map((job) => ({
+          id: job.id,
+          title: job.jobTitle,
+          company: job.departmentName,
+          location: job.location,
+          salary: `$${job.salary}`,
+          period: t('period.month', { defaultValue: 'Month' }),
+          tags: [
+            job.departmentName,
+            job.jobType,
+            job.jobType.toLowerCase() === 'remote' ? t('workTypes.remote', { defaultValue: 'Remote' }) : '',
+          ].filter(Boolean),
+          status: job.status,
+        }))
+        setJobs(transformedJobs)
+        setError(null)
+      } catch (err: any) {
+        console.error('Error fetching jobs:', err)
+        setError(err.response?.data?.message || t('jobBoard.fetchError', { defaultValue: 'Failed to load jobs' }))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchJobs()
+  }, [t, token])
 
-  const filterJobs = (jobs: Job[]) => {
-    if (!searchTerm) return jobs
-    return jobs.filter(job =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filterJobs = (status: string) => {
+    if (!searchTerm) return jobs.filter((job) => job.status === status)
+    return jobs.filter(
+      (job) =>
+        job.status === status &&
+        (job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     )
   }
 
@@ -115,7 +175,7 @@ const JobBoard = () => {
     </div>
   )
 
-  const JobColumn = ({ title, jobs, dotColor, onDelete }: { title: string; jobs: Job[]; dotColor: string; onDelete: (id: number) => void }) => (
+  const JobColumn = ({ title, status, dotColor }: { title: string; status: string; dotColor: string }) => (
     <div className="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="p-4 sm:p-6">
         <div className="flex items-center space-x-3 mb-4 sm:mb-6">
@@ -123,66 +183,98 @@ const JobBoard = () => {
           <h2 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">{title}</h2>
         </div>
         <div>
-          {filterJobs(jobs).map(job => <JobCard key={job.id} job={job} onDelete={() => onDelete(job.id)} />)}
+          {loading ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">{t('jobBoard.loading', { defaultValue: 'Loading jobs...' })}</p>
+          ) : error ? (
+            <p className="text-center text-red-500 dark:text-red-400">{error}</p>
+          ) : filterJobs(status).length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">{t('jobBoard.noJobs', { defaultValue: 'No jobs found' })}</p>
+          ) : (
+            filterJobs(status).map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                onDelete={async () => {
+                  if (confirm(t('jobBoard.confirmDelete', { defaultValue: 'Are you sure you want to delete this job?' }))) {
+                    try {
+                      await axios.delete(`https://hr-management-system-pmfp.onrender.com/api/jobs/${job.id}`, {
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Accept': '*/*',
+                        },
+                      })
+                      setJobs((prev) => prev.filter((j) => j.id !== job.id))
+                      toast.success(t('jobBoard.deleteSuccess', { defaultValue: 'Job deleted successfully' }))
+                    } catch (err: any) {
+                      console.error('Error deleting job:', err)
+                      setError(err.response?.data?.message || t('jobBoard.deleteError', { defaultValue: 'Failed to delete job' }))
+                    }
+                  }
+                }}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>
   )
 
-  const handleAddJob = () => {
+  const handleAddJob = async () => {
     if (!newJob.title || !newJob.company || !newJob.location || !newJob.salary) {
       alert(t('jobBoard.validationError', { defaultValue: 'Please fill in all required fields' }))
       return
     }
-    const jobToAdd = {
-      id: Date.now(),
-      title: newJob.title,
-      company: newJob.company,
-      location: newJob.location,
-      salary: newJob.salary,
-      period: t('period.month', { defaultValue: 'Month' }),
-      tags: [
-        newJob.company,
-        newJob.jobType,
-        newJob.workType === t('workTypes.workFromHome', { defaultValue: 'Work from Home' }) ? t('workTypes.remote', { defaultValue: 'Remote' }) : '',
-      ].filter(Boolean),
+    try {
+      const salaryNumber = parseFloat(newJob.salary.replace('$', '')) || 0
+      const response = await axios.post('https://hr-management-system-pmfp.onrender.com/api/jobs', {
+        jobTitle: newJob.title,
+        jobDescription: newJob.description || 'No description provided',
+        departmentName: newJob.company,
+        location: newJob.location,
+        salary: salaryNumber,
+        jobType: newJob.workType,
+        status: newJob.status,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': '*/*',
+        },
+      })
+      const job: ApiJob = response.data
+      const jobToAdd: Job = {
+        id: job.id,
+        title: job.jobTitle,
+        company: job.departmentName,
+        location: job.location,
+        salary: `$${job.salary}`,
+        period: t('period.month', { defaultValue: 'Month' }),
+        tags: [
+          job.departmentName,
+          job.jobType,
+          job.jobType.toLowerCase() === 'remote' ? t('workTypes.remote', { defaultValue: 'Remote' }) : '',
+        ].filter(Boolean),
+        status: job.status,
+      }
+      setJobs((prev) => [...prev, jobToAdd])
+      setShowModal(false)
+      setNewJob({ title: '', description: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', status: 'Active' })
+      setError(null)
+      toast.success(t('jobBoard.addSuccess', { defaultValue: 'Job added successfully' }))
+    } catch (err: any) {
+      console.error('Error adding job:', err)
+      setError(err.response?.data?.message || t('jobBoard.addError', { defaultValue: 'Failed to add job' }))
     }
-    switch (newJob.status) {
-      case 'Active':
-        setActiveJobs([...activeJobs, jobToAdd])
-        break
-      case 'Inactive':
-        setInactiveJobs([...inactiveJobs, jobToAdd])
-        break
-      case 'Completed':
-        setCompletedJobs([...completedJobs, jobToAdd])
-        break
-    }
-    setShowModal(false)
-    setNewJob({ title: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', tags: [], status: 'Active' })
   }
 
   const handleCancel = () => {
     setShowModal(false)
-    setNewJob({ title: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', tags: [], status: 'Active' })
-  }
-
-  const handleDeleteJob = (id: number, status: string) => {
-    switch (status) {
-      case 'Active':
-        setActiveJobs(activeJobs.filter(job => job.id !== id))
-        break
-      case 'Inactive':
-        setInactiveJobs(inactiveJobs.filter(job => job.id !== id))
-        break
-      case 'Completed':
-        setCompletedJobs(completedJobs.filter(job => job.id !== id))
-        break
-    }
+    setNewJob({ title: '', description: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', status: 'Active' })
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+      <ToastContainer />
       {/* Top Navigation */}
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-full sm:max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
@@ -199,7 +291,7 @@ const JobBoard = () => {
                 placeholder={t('search.placeholder', { defaultValue: 'Search' })}
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               />
             </div>
 
@@ -237,7 +329,7 @@ const JobBoard = () => {
               placeholder={t('search.placeholder', { defaultValue: 'Search' })}
               className="pl-10 pr-4 py-2 w-full border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             />
           </div>
           <button
@@ -252,11 +344,23 @@ const JobBoard = () => {
 
       {/* Job columns */}
       <div className="flex flex-col md:flex-row min-h-screen">
-        <JobColumn title={t('jobBoard.activeJobs', { defaultValue: 'Active Jobs' })} jobs={activeJobs} dotColor="bg-yellow-500" onDelete={(id) => handleDeleteJob(id, 'Active')} />
+        <JobColumn
+          title={t('jobBoard.activeJobs', { defaultValue: 'Active Jobs' })}
+          status="Active"
+          dotColor="bg-yellow-500"
+        />
         <div className="w-full md:w-px h-px md:h-auto bg-gray-200 dark:bg-gray-700"></div>
-        <JobColumn title={t('jobBoard.inactiveJobs', { defaultValue: 'Inactive Jobs' })} jobs={inactiveJobs} dotColor="bg-red-500" onDelete={(id) => handleDeleteJob(id, 'Inactive')} />
+        <JobColumn
+          title={t('jobBoard.inactiveJobs', { defaultValue: 'Inactive Jobs' })}
+          status="Inactive"
+          dotColor="bg-red-500"
+        />
         <div className="w-full md:w-px h-px md:h-auto bg-gray-200 dark:bg-gray-700"></div>
-        <JobColumn title={t('jobBoard.completedJobs', { defaultValue: 'Completed Jobs' })} jobs={completedJobs} dotColor="bg-green-500" onDelete={(id) => handleDeleteJob(id, 'Completed')} />
+        <JobColumn
+          title={t('jobBoard.completedJobs', { defaultValue: 'Completed Jobs' })}
+          status="Completed"
+          dotColor="bg-green-500"
+        />
       </div>
 
       {/* Modal */}
@@ -278,11 +382,13 @@ const JobBoard = () => {
               <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.department', { defaultValue: 'Select Department' })}</label>
               <select
                 value={newJob.company}
-                onChange={e => setNewJob({ ...newJob, company: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, company: e.target.value })}
                 className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
               >
                 <option value="">{t('jobBoard.selectDepartment', { defaultValue: 'Select Department' })}</option>
-                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                {departments.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
               </select>
 
               {/* Job title */}
@@ -290,18 +396,29 @@ const JobBoard = () => {
                 type="text"
                 placeholder={t('jobBoard.jobTitlePlaceholder', { defaultValue: 'Enter Job Title' })}
                 value={newJob.title}
-                onChange={e => setNewJob({ ...newJob, title: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, title: e.target.value })}
                 className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+              />
+
+              {/* Job Description */}
+              <textarea
+                placeholder={t('jobBoard.descriptionPlaceholder', { defaultValue: 'Enter Job Description' })}
+                value={newJob.description}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewJob({ ...newJob, description: e.target.value })}
+                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                rows={4}
               />
 
               {/* Location */}
               <select
                 value={newJob.location}
-                onChange={e => setNewJob({ ...newJob, location: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, location: e.target.value })}
                 className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
               >
                 <option value="">{t('jobBoard.selectLocation', { defaultValue: 'Select Location' })}</option>
-                {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                {locations.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
               </select>
 
               {/* Salary */}
@@ -309,7 +426,7 @@ const JobBoard = () => {
                 type="text"
                 placeholder={t('jobBoard.salaryPlaceholder', { defaultValue: 'Enter Salary (e.g., $3000)' })}
                 value={newJob.salary}
-                onChange={e => setNewJob({ ...newJob, salary: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, salary: e.target.value })}
                 className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
               />
 
@@ -321,18 +438,20 @@ const JobBoard = () => {
                     type="radio"
                     value="Full Time"
                     checked={newJob.jobType === 'Full Time'}
-                    onChange={e => setNewJob({ ...newJob, jobType: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
                     className="mr-2"
-                  />{t('jobTypes.fullTime', { defaultValue: 'Full Time' })}
+                  />
+                  {t('jobTypes.fullTime', { defaultValue: 'Full Time' })}
                 </label>
                 <label className="flex items-center text-xs sm:text-sm dark:text-white">
                   <input
                     type="radio"
                     value="Part Time"
                     checked={newJob.jobType === 'Part Time'}
-                    onChange={e => setNewJob({ ...newJob, jobType: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
                     className="mr-2"
-                  />{t('jobTypes.partTime', { defaultValue: 'Part Time' })}
+                  />
+                  {t('jobTypes.partTime', { defaultValue: 'Part Time' })}
                 </label>
               </div>
 
@@ -344,18 +463,30 @@ const JobBoard = () => {
                     type="radio"
                     value="Office"
                     checked={newJob.workType === 'Office'}
-                    onChange={e => setNewJob({ ...newJob, workType: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
                     className="mr-2"
-                  />{t('workTypes.office', { defaultValue: 'Office' })}
+                  />
+                  {t('workTypes.office', { defaultValue: 'Office' })}
                 </label>
                 <label className="flex items-center text-xs sm:text-sm dark:text-white">
                   <input
                     type="radio"
-                    value="Work from Home"
-                    checked={newJob.workType === 'Work from Home'}
-                    onChange={e => setNewJob({ ...newJob, workType: e.target.value })}
+                    value="Remote"
+                    checked={newJob.workType === 'Remote'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
                     className="mr-2"
-                  />{t('workTypes.workFromHome', { defaultValue: 'Work from Home' })}
+                  />
+                  {t('workTypes.remote', { defaultValue: 'Remote' })}
+                </label>
+                <label className="flex items-center text-xs sm:text-sm dark:text-white">
+                  <input
+                    type="radio"
+                    value="Hybrid"
+                    checked={newJob.workType === 'Hybrid'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
+                    className="mr-2"
+                  />
+                  {t('workTypes.hybrid', { defaultValue: 'Hybrid' })}
                 </label>
               </div>
 
@@ -367,27 +498,30 @@ const JobBoard = () => {
                     type="radio"
                     value="Active"
                     checked={newJob.status === 'Active'}
-                    onChange={e => setNewJob({ ...newJob, status: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
                     className="mr-2"
-                  />{t('jobBoard.activeJobs', { defaultValue: 'Active' })}
+                  />
+                  {t('jobBoard.activeJobs', { defaultValue: 'Active' })}
                 </label>
                 <label className="flex items-center text-xs sm:text-sm dark:text-white">
                   <input
                     type="radio"
                     value="Inactive"
                     checked={newJob.status === 'Inactive'}
-                    onChange={e => setNewJob({ ...newJob, status: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
                     className="mr-2"
-                  />{t('jobBoard.inactiveJobs', { defaultValue: 'Inactive' })}
+                  />
+                  {t('jobBoard.inactiveJobs', { defaultValue: 'Inactive' })}
                 </label>
                 <label className="flex items-center text-xs sm:text-sm dark:text-white">
                   <input
                     type="radio"
                     value="Completed"
                     checked={newJob.status === 'Completed'}
-                    onChange={e => setNewJob({ ...newJob, status: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
                     className="mr-2"
-                  />{t('jobBoard.completedJobs', { defaultValue: 'Completed' })}
+                  />
+                  {t('jobBoard.completedJobs', { defaultValue: 'Completed' })}
                 </label>
               </div>
             </div>

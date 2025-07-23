@@ -1,343 +1,204 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
-import { User, Briefcase, FileText, Lock, ChevronRight, Search, Bell, ChevronDown } from 'lucide-react'
+import React, { useState, useCallback } from 'react'
+import { User, Briefcase, FileText, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/components/AuthContext'
-import axios from 'axios'
 
+// Import your form components
 import PersonalForm from './PersonalForm'
 import ProfessionalForm from './ProfessionalForm'
-import DocumentUpload from './DocumentUpload'
+import DocumentUpload, { Document } from './DocumentUpload'
 import AccountAccessForm from './AccountAccessForm'
 
-const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
-  const [imgSrc, setImgSrc] = useState(src)
+// Simplified Header
+// FIX: The header now uses the translation function
+const Header = () => {
+  const { t } = useTranslation();
   return (
-    <Image
-      src={imgSrc}
-      alt={name}
-      width={32}
-      height={32}
-      className="rounded-full object-cover sm:w-10 sm:h-10"
-      onError={() =>
-        setImgSrc(
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=32`
-        )
-      }
-    />
+    <div className="mb-6">
+      <h1 className="text-2xl font-semibold">{t('addEmployee.title', 'Add New Employee')}</h1>
+    </div>
   )
 }
 
-const Header: React.FC = () => {
-  const router = useRouter()
-  const { t } = useTranslation()
-  const { user } = useAuth()
-
-  const handleAllEmployeeClick = () => {
-    router.push('/employees')
-  }
-
-  return (
-    <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:py-4 mb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="mb-4 sm:mb-0">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
-            {t('addEmployee.title')}
-          </h1>
-          <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-            <span
-              onClick={handleAllEmployeeClick}
-              className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
-            >
-              {t('addEmployee.allEmployees')}
-            </span>
-            <span className="mx-2">›</span>
-            <span className="text-gray-800 dark:text-gray-200">{t('addEmployee.title')}</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="relative w-full sm:w-64 md:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t('addEmployee.search')}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-          </button>
-          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2">
-            <EmployeeAvatar
-              src={
-                user?.profileImage ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=32`
-              }
-              name={user?.fullName || 'User'}
-            />
-            <div className="hidden sm:block text-right">
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {user?.fullName || 'User'}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t(`header.${user?.role?.toLowerCase()}`, user?.role || 'HR Manager')}
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+// --- TYPE DEFINITIONS ---
+type LocalEmployee = {
+  id: number
+  employeeId?: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  email?: string
+  mobileNumber?: string
+  department?: string
+  designation?: string
+  employeeType?: string
+  status?: string
+  profileImage?: string
+  documents?: { title: string; fileName: string; dataUrl: string; }[]
 }
 
 export default function AddEmployeePage() {
-  const { t } = useTranslation()
+  const { t } = useTranslation() // This 't' is now used for the step labels
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState('personal')
 
+  // FIX: Step labels now use the translation function 't'
   const steps = [
-    { key: 'personal', label: t('addEmployee.steps.personal'), icon: <User className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> },
-    { key: 'professional', label: t('addEmployee.steps.professional'), icon: <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> },
-    { key: 'step3', label: t('addEmployee.steps.documents'), icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> },
-    { key: 'step4', label: t('addEmployee.steps.account'), icon: <Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> },
+    { key: 'personal', label: t('steps.personal', 'Personal Information'), icon: User },
+    { key: 'professional', label: t('steps.professional', 'Professional Information'), icon: Briefcase },
+    { key: 'documents', label: t('steps.documents', 'Documents'), icon: FileText },
+    { key: 'account', label: t('steps.account', 'Account Access'), icon: Lock },
   ]
 
-  const renderNavigationTabs = () => (
-    <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 sm:mb-8 overflow-x-auto">
-      {steps.map((step, index) => (
-        <button
-          key={step.key}
-          onClick={() => setCurrentStep(step.key)}
-          className={`flex items-center px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm ${
-            currentStep === step.key
-              ? 'text-purple-600 border-b-2 border-purple-600 font-medium dark:text-purple-400'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white'
-          }`}
-        >
-          {step.icon}
-          <span className="hidden sm:inline">{step.label}</span>
-          <span className="sm:hidden">{step.label.charAt(0)}</span>
-          {index < steps.length - 1 && (
-            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 text-gray-400 dark:text-gray-500" />
-          )}
-        </button>
-      ))}
-    </div>
-  )
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // --- STATE MANAGEMENT ---
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const [personalFormData, setPersonalFormData] = useState({
-    firstName: '',
-    lastName: '',
-    mobileNumber: '',
-    emailAddress: '',
-    dateOfBirth: '',
-    maritalStatus: '',
-    gender: '',
-    nationality: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
+    firstName: '', lastName: '', mobileNumber: '', email: '', dateOfBirth: '',
+    maritalStatus: '', gender: '', nationality: '', address: '', city: '',
+    state: '', zipCode: '',
   })
-
- 
-
   const [professionalFormData, setProfessionalFormData] = useState({
-    employeeID: '',
-    userName: '',
-    employeeType: '',
-    emailAddress: '',
-    department: '',
-    designation: '',
-    joiningDate: '',
-    officeLocation: '',
+    employeeID: '', userName: '', employeeType: '', emailAddress: '', department: '',
+    designation: '', joiningDate: '', officeLocation: '',
   })
-
-  const handleProfessionalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setProfessionalFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const [uploadedDocs, setUploadedDocs] = useState<(File | null)[]>([null, null, null, null])
-  const docInputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const docTitles = t('addEmployee.docTitles', { returnObjects: true }) as string[]
-
-  const handleDocUpload = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setUploadedDocs((prev) => {
-        const updated = [...prev]
-        updated[index] = file
-        return updated
-      })
-    }
-  }
-
-  const triggerDocInput = (index: number) => docInputRefs.current[index]?.click()
-
+  const [uploadedDocs, setUploadedDocs] = useState<Document[]>([])
   const [accountAccessData, setAccountAccessData] = useState({
-    emailAddress: '',
-    slackId: '',
-    skypeId: '',
-    githubId: '',
+    slackId: '', skypeId: '', githubId: '',
   })
 
-  const handleAccountAccessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setAccountAccessData((prev) => ({ ...prev, [name]: value }))
-  }
+  // --- HANDLER FUNCTIONS ---
+  const handleCancel = useCallback(() => router.push('/employees'), [router])
 
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post('/api/employees', {
-        ...personalFormData,
-        ...professionalFormData,
-      })
-      const newEmployeeId = response.data.id
-
-      if (uploadedDocs.some(doc => doc !== null)) {
-        const formData = new FormData()
-        formData.append('employeeId', newEmployeeId)
-        uploadedDocs.forEach(doc => doc && formData.append('files', doc))
-        await axios.post('/api/documents', formData)
-      }
-
-      if (fileInputRef.current?.files?.[0]) {
-        const formData = new FormData()
-        formData.append('employeeId', newEmployeeId)
-        formData.append('file', fileInputRef.current.files[0])
-        const photoResponse = await axios.post('/api/photos', formData)
-        setProfileImage(photoResponse.data.url)
-      }
-
-      await axios.post('/api/account-access', { employeeId: newEmployeeId, ...accountAccessData })
-
-      alert(t('addEmployee.success'))
-      handleCancel() // reset all
-    } catch (error) {
-      console.error('Error submitting data:', error)
-      alert(t('addEmployee.errors.submit'))
+  const handleUploadComplete = (newlyUploadedDoc: Document) => {
+    const existingDocIndex = uploadedDocs.findIndex(
+      doc => doc.title === newlyUploadedDoc.title
+    );
+    const updatedDocs = [...uploadedDocs];
+    if (existingDocIndex !== -1) {
+      updatedDocs[existingDocIndex] = newlyUploadedDoc;
+    } else {
+      updatedDocs.push(newlyUploadedDoc);
     }
-  }
+    setUploadedDocs(updatedDocs);
+  };
+
+  const handleSubmit = useCallback(() => {
+    const existingEmployees: LocalEmployee[] = JSON.parse(
+      localStorage.getItem('employees') || '[]'
+    )
+    const documentsToSave = uploadedDocs
+      .filter(doc => doc.file)
+      .map(doc => ({
+        title: doc.title,
+        fileName: doc.file!.name,
+        dataUrl: doc.file!.dataUrl
+    }));
+
+    const newEmployee: LocalEmployee = {
+      id: Date.now(),
+      employeeId: professionalFormData.employeeID,
+      firstName: personalFormData.firstName,
+      lastName: personalFormData.lastName,
+      fullName: `${personalFormData.firstName} ${personalFormData.lastName}`.trim(),
+      email: professionalFormData.emailAddress || personalFormData.email,
+      mobileNumber: personalFormData.mobileNumber,
+      department: professionalFormData.department,
+      designation: professionalFormData.designation,
+      employeeType: professionalFormData.officeLocation === 'Remote' ? 'remote' : 'permanent',
+      status: 'active',
+      profileImage: profileImage || undefined,
+      documents: documentsToSave,
+    }
+
+    const updatedEmployees = [...existingEmployees, newEmployee]
+    localStorage.setItem('employees', JSON.stringify(updatedEmployees))
+    alert(t('alerts.employeeAdded', 'Employee added successfully!'))
+    router.push('/employees')
+  }, [personalFormData, professionalFormData, profileImage, uploadedDocs, router, t]) // Added 't' to dependency array
 
   const handleNext = () => {
-    if (currentStep === 'personal') {
-      setCurrentStep('professional')
-    } else if (currentStep === 'professional') {
-      setCurrentStep('step3')
-    } else if (currentStep === 'step3') {
-      setCurrentStep('step4')
-    } else if (currentStep === 'step4') {
+    const currentIdx = steps.findIndex((s) => s.key === currentStep)
+    if (currentIdx < steps.length - 1) {
+      setCurrentStep(steps[currentIdx + 1].key)
+    } else {
       handleSubmit()
     }
   }
 
-  const handleCancel = () => {
-    setCurrentStep('personal')
-    setPersonalFormData({
-      firstName: '',
-      lastName: '',
-      mobileNumber: '',
-      emailAddress: '',
-      dateOfBirth: '',
-      maritalStatus: '',
-      gender: '',
-      nationality: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-    })
-    setProfessionalFormData({
-      employeeID: '',
-      userName: '',
-      employeeType: '',
-      emailAddress: '',
-      department: '',
-      designation: '',
-      joiningDate: '',
-      officeLocation: '',
-    })
-    setUploadedDocs([null, null, null, null])
-    setAccountAccessData({
-      emailAddress: '',
-      slackId: '',
-      skypeId: '',
-      githubId: '',
-    })
-    setProfileImage(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    docInputRefs.current.forEach(ref => ref && (ref.value = ''))
-  }
-
+  // --- RENDER LOGIC ---
   return (
-    <div className="p-4 sm:p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 max-w-full sm:max-w-4xl mx-auto">
+    <div className="p-6 bg-white dark:bg-gray-900 max-w-5xl mx-auto rounded-lg">
       <Header />
-      {renderNavigationTabs()}
-      <div className="max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
-        {currentStep === 'personal' && (
-          <PersonalForm
-  profileImage={profileImage}
-  personalFormData={personalFormData}
-  onCancel={handleCancel}
-  onNext={({ personalFormData, profileImage }) => {
-    setPersonalFormData(personalFormData)
-    setProfileImage(profileImage)
-    handleNext()
-  }}
-/>
-        )}
-        {currentStep === 'professional' && (
-          <ProfessionalForm
-            formData={professionalFormData}
-            handleChange={handleProfessionalInputChange}
-            employeeTypes={['Full-Time', 'Part-Time', 'Contractor']}
-            departments={['Engineering', 'Marketing', 'HR', 'Sales']}
-            officeLocations={['New York', 'London', 'Kigali']}
-            onCancel={handleCancel}
-            onNext={handleNext}
-          />
-        )}
-        {currentStep === 'step3' && (
-          <div>
-            <DocumentUpload
-              docTitles={docTitles}
-              uploadedDocs={uploadedDocs}
-              docInputRefs={docInputRefs}
-              handleDocUpload={handleDocUpload}
-              triggerDocInput={triggerDocInput}
-            />
-            <div className="flex flex-col sm:flex-row justify-end gap-4 mt-4 sm:mt-6">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 sm:px-6 sm:py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                {t('addEmployee.buttons.cancel')}
-              </button>
-              <button
-                onClick={handleNext}
-                className="px-4 py-2 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
-              >
-                {t('addEmployee.buttons.next')}
-              </button>
-            </div>
-          </div>
-        )}
-        {currentStep === 'step4' && (
-          <AccountAccessForm
-            formData={accountAccessData}
-            handleChange={handleAccountAccessChange}
-            onCancel={handleCancel}
-            onSubmit={handleSubmit}
-          />
-        )}
+      <div className="flex border-b mb-8 overflow-x-auto">
+        {steps.map((step) => (
+          <button
+            key={step.key}
+            onClick={() => setCurrentStep(step.key)}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 text-sm font-medium ${
+              currentStep === step.key
+                ? 'text-purple-600 border-b-2 border-purple-600'
+                : 'text-gray-500'
+            }`}
+          >
+            <step.icon className="w-5 h-5" />
+            {step.label}
+          </button>
+        ))}
       </div>
+
+      {currentStep === 'personal' && (
+        <PersonalForm
+          profileImage={profileImage}
+          personalFormData={personalFormData}
+          onCancel={handleCancel}
+          onNext={({ personalFormData, profileImage }) => {
+            setPersonalFormData(personalFormData);
+            setProfileImage(profileImage);
+            handleNext();
+          }}
+        />
+      )}
+      {currentStep === 'professional' && (
+        <ProfessionalForm
+          formData={professionalFormData}
+          handleChange={(e) =>
+            setProfessionalFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+          }
+          employeeTypes={['Full-Time', 'Part-Time', 'Contractor']}
+          departments={['Engineering', 'Marketing', 'HR', 'Sales']}
+          officeLocations={['New York', 'London', 'Kigali', 'Remote']}
+          onCancel={handleCancel}
+          onNext={handleNext}
+        />
+      )}
+      {currentStep === 'documents' && (
+        <div>
+          <DocumentUpload
+            onUploadComplete={handleUploadComplete}
+            docTitles={['Appointment Letter', 'ID Proof', 'Address Proof', 'Previous Experience']}
+          />
+          <div className="flex justify-end gap-4 mt-6">
+            <button onClick={handleCancel} className="px-6 py-2 border rounded-md">
+              {t('buttons.cancel', 'Cancel')}
+            </button>
+            <button onClick={handleNext} className="px-6 py-2 bg-purple-600 text-white rounded-md">
+              {t('buttons.next', 'Next')}
+            </button>
+          </div>
+        </div>
+      )}
+      {currentStep === 'account' && (
+        <AccountAccessForm
+          formData={{ ...accountAccessData, emailAddress: professionalFormData.emailAddress }}
+          handleChange={(e) =>
+            setAccountAccessData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+          }
+          onCancel={handleCancel}
+          onSubmit={handleSubmit} 
+        />
+      )}
     </div>
   )
 }

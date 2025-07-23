@@ -59,7 +59,7 @@ export default function AccountAccess({ formData, handleChange, onCancel, onSubm
         />
       </div>
 
-      {/* Responsive buttons: stack on small screens, inline on medium+ */}
+      
       <div className="flex flex-col sm:flex-row justify-end gap-4">
         <button
           type="button"
