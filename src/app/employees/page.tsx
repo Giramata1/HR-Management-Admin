@@ -14,7 +14,7 @@ const fakeApi = {
       if (typeof window !== 'undefined') {
         const storedEmployees = localStorage.getItem('employees');
 
-       
+      
         if (storedEmployees && JSON.parse(storedEmployees).length > 0) {
           console.log("Fetching employees from localStorage...");
           return JSON.parse(storedEmployees);
@@ -43,7 +43,7 @@ const fakeApi = {
             { "employeeId": "HR001", "firstName": "HR", "lastName": "Manager", "email": "hrms.hr@gmail.com", "mobileNumber": "+1234567890", "department": "Human Resources", "designation": "HR Manager", "employeeType": "Full-time", "status": "Active" }
           ];
 
-        
+         
           const employeeData: Employee[] = rawEmployeeData.map(emp => ({
             id: emp.employeeId,
             personalInfo: { profileImage: null, firstName: emp.firstName, lastName: emp.lastName, mobileNumber: emp.mobileNumber, email: emp.email, dateOfBirth: 'N/A', maritalStatus: 'N/A', gender: 'N/A', nationality: 'N/A', address: 'N/A', city: 'N/A', state: 'N/A', zipCode: 'N/A' },
@@ -83,7 +83,7 @@ const fakeApi = {
 };
 
 
-
+// --- Child Components (Unchanged) ---
 const EmployeeAvatar = ({ src, name }: { src: string | null; name: string }) => {
     const [imgSrc, setImgSrc] = useState(src || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`);
     useEffect(() => { setImgSrc(src || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`) }, [src, name]);
@@ -113,7 +113,7 @@ const FilterModal = ({ isOpen, onClose, onApply, currentFilters, allDepartments 
 };
 
 
-
+// --- Main Page Component ---
 export default function EmployeeTablePage() {
   const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -127,10 +127,10 @@ export default function EmployeeTablePage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({ departments: [] as string[], employeeType: '' });
 
-  
+  // Dynamically get department options from the loaded employees
   const departmentOptions = useMemo(() => {
     const depts = employees.map(emp => emp.professionalInfo.department);
-    return Array.from(new Set(depts)); 
+    return Array.from(new Set(depts)); // Use Array.from for better compatibility
   }, [employees]);
 
   const fetchEmployees = useCallback(async () => { try { setLoading(true); const data = await fakeApi.getEmployees(); setEmployees(data); } catch (err) { setError('Failed to fetch employee data.'); console.error(err); } finally { setLoading(false); } }, []);
