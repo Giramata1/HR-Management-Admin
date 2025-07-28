@@ -19,7 +19,7 @@ const fakeApi = {
           console.log("Fetching employees from localStorage...");
           return JSON.parse(storedEmployees);
         }
-      .
+      
         else {
           console.log("No employees Loading default data...");
           const rawEmployeeData = [
