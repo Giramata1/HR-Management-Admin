@@ -1,20 +1,19 @@
-
 'use client';
 
 import React, { useState, useCallback } from 'react';
-// FIX: Add CheckCircle2 for the modal icon
+
 import { User, Briefcase, FileText, Lock, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
-// Import your form components and the Employee type
+
 import PersonalForm from './PersonalForm';
 import ProfessionalForm from './ProfessionalForm';
 import DocumentUpload, { Document } from './DocumentUpload';
 import AccountAccessForm from './AccountAccessForm';
 import { Employee } from '@/types/employee';
 
-// --- Reusable Success Modal Component (defined in the same file) ---
+
 interface SuccessModalProps {
   onClose: () => void;
   title?: string;
@@ -100,12 +99,26 @@ export default function AddEmployeePage() {
     try {
       const existingEmployees: Employee[] = JSON.parse(localStorage.getItem('employees') || '[]');
       const documentsToSave = uploadedDocs.filter(doc => doc.file).map(doc => ({ title: doc.title, fileName: doc.file!.name, dataUrl: doc.file!.dataUrl }));
+      
       const newEmployee: Employee = {
         id: professionalFormData.employeeID || `EMP-${Date.now()}`,
         profileImage: profileImage,
         status: 'active',
-        personalInfo: { ...personalFormData },
-        professionalInfo: { userName: professionalFormData.userName, employeeType: professionalFormData.employeeType, emailAddress: professionalFormData.emailAddress, department: professionalFormData.department, designation: professionalFormData.designation, workingDays: professionalFormData.workingDays, joiningDate: professionalFormData.joiningDate, officeLocation: professionalFormData.officeLocation },
+        // THIS IS THE FIX: Manually include profileImage before spreading the rest of the form data.
+        personalInfo: {
+          profileImage: profileImage,
+          ...personalFormData,
+        },
+        professionalInfo: { 
+          userName: professionalFormData.userName, 
+          employeeType: professionalFormData.employeeType, 
+          emailAddress: professionalFormData.emailAddress, 
+          department: professionalFormData.department, 
+          designation: professionalFormData.designation, 
+          workingDays: professionalFormData.workingDays, 
+          joiningDate: professionalFormData.joiningDate, 
+          officeLocation: professionalFormData.officeLocation 
+        },
         documents: documentsToSave,
         accountAccess: { ...accountAccessData },
       };
