@@ -35,21 +35,26 @@ export default function DepartmentsPage() {
   const [updatedDepartmentName, setUpdatedDepartmentName] = useState('');
   const [departmentsData, setDepartmentsData] = useState<DepartmentsData>({});
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false); 
+
+  useEffect(() => {
+    
+    setHydrated(true);
+  }, []);
 
 
   const fetchAndProcessData = useCallback(() => {
     setLoading(true);
     try {
+      
       if (typeof window !== 'undefined') {
 
         const storedEmployees = localStorage.getItem('employees');
         const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
 
-        
         const storedDepartments = localStorage.getItem('departments');
         const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
 
-      
         const groupedByDept = employees.reduce((acc, emp) => {
           const dept = emp.professionalInfo.department;
           if (dept) {
@@ -62,7 +67,6 @@ export default function DepartmentsPage() {
           return acc;
         }, {} as DepartmentsData);
 
-        
         departmentNames.forEach(deptName => {
             const slug = deptName.toLowerCase().replace(/\s+/g, '-');
             if (!groupedByDept[slug]) {
@@ -80,8 +84,11 @@ export default function DepartmentsPage() {
   }, []);
 
   useEffect(() => {
-    fetchAndProcessData();
-  }, [fetchAndProcessData]);
+    
+    if (hydrated) {
+      fetchAndProcessData();
+    }
+  }, [hydrated, fetchAndProcessData]);
 
  
 
@@ -91,7 +98,6 @@ export default function DepartmentsPage() {
       const storedDepartments = localStorage.getItem('departments');
       const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
 
-     
       if (departmentNames.some(d => d.toLowerCase() === newDepartmentName.trim().toLowerCase())) {
           alert("Department with this name already exists.");
           return;
@@ -102,7 +108,7 @@ export default function DepartmentsPage() {
 
       setNewDepartmentName('');
       setShowAddModal(false);
-      fetchAndProcessData(); 
+      fetchAndProcessData();
     }
   };
 
@@ -117,26 +123,22 @@ export default function DepartmentsPage() {
       const oldDeptName = showUpdateModal.name;
       const newDeptName = updatedDepartmentName.trim();
 
-      
       const storedDepartments = localStorage.getItem('departments');
       const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
 
       const storedEmployees = localStorage.getItem('employees');
       const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
 
-     
       if (oldDeptName.toLowerCase() !== newDeptName.toLowerCase() && departmentNames.some(d => d.toLowerCase() === newDeptName.toLowerCase())) {
         alert("Another department with this name already exists.");
         return;
       }
 
-     
       const updatedDepartmentNames = departmentNames.map(d =>
         d.toLowerCase() === oldDeptName.toLowerCase() ? newDeptName : d
       );
       localStorage.setItem('departments', JSON.stringify(updatedDepartmentNames));
 
-     
       const updatedEmployees = employees.map(emp => {
         if (emp.professionalInfo.department.toLowerCase() === oldDeptName.toLowerCase()) {
           emp.professionalInfo.department = newDeptName;
@@ -145,7 +147,6 @@ export default function DepartmentsPage() {
       });
       localStorage.setItem('employees', JSON.stringify(updatedEmployees));
 
-   
       setShowUpdateModal(null);
       setUpdatedDepartmentName('');
       fetchAndProcessData();
@@ -153,7 +154,6 @@ export default function DepartmentsPage() {
   };
 
   const handleDeleteClick = (department: Department) => {
-   
     if (department.employees.length > 0) {
         alert(`Cannot delete "${department.name}" because it has ${department.employees.length} employee(s) assigned to it. Please reassign them first.`);
         return;
@@ -178,6 +178,11 @@ export default function DepartmentsPage() {
   const filteredDepartments = Object.entries(departmentsData).filter(([dept]) =>
     dept.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (!hydrated) {
+  
+    return <div className="text-center py-10">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 sm:px-8 py-6">
@@ -259,7 +264,7 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-    
+      {/* Add Department Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -285,7 +290,7 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-     
+      {/* Update Department Modal */}
       {showUpdateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -310,7 +315,7 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-    
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
