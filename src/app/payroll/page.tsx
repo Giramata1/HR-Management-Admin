@@ -1,12 +1,12 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-// Bell and ChevronDown icons are removed as they were part of the old header
-import { Search, Download, ChevronLeft, ChevronRight, Plus, X, Edit2, Trash2 } from 'lucide-react';
+import { Search, Download, ChevronLeft, ChevronRight, Plus, X, Edit2, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-// --- Interfaces ---
+
 interface PayrollEmployee {
   employeeId: number;
   employeeName: string;
@@ -19,7 +19,14 @@ interface PayrollEmployee {
   netSalary: number;
 }
 
-// The 'getInitials' function is still needed for the table display
+interface ModalState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  type: 'success' | 'error' | 'confirmation';
+  onConfirm?: () => void;
+}
+
 const getInitials = (name: string) => {
   if (!name) return '';
   return name
@@ -34,14 +41,12 @@ const PayrollPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editEmployeeId, setEditEmployeeId] = useState<number | null>(null);
   const [payrollData, setPayrollData] = useState<PayrollEmployee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // The local state for the user is no longer needed
-  // const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  
+  const [modalState, setModalState] = useState<ModalState>({ isOpen: false, title: '', message: '', type: 'success' });
 
   const [newPayroll, setNewPayroll] = useState<Omit<PayrollEmployee, 'employeeId' | 'createdAt' | 'updatedAt' | 'netSalary'>>({
     employeeName: '',
@@ -54,12 +59,8 @@ const PayrollPage = () => {
   const API_BASE_URL = 'https://hr-management-system-pmfp.onrender.com/api/payroll';
   const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiSFIiLCJzdWIiOiJocm1zLmhyQGdtYWlsLmNvbSIsImlhdCI6MTc1MzE4ODkxNywiZXhwIjoxNzU2MjEyOTE3fQ.7yScLczcXGmzUeR8wRLd8gyZylZuiiNGIcniPvOKO0g';
 
-  // The token decoding function is no longer needed in this component
-  // const decodeToken = ...
-
   const fetchPayrollData = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await fetch(API_BASE_URL, {
         method: 'GET',
@@ -69,22 +70,29 @@ const PayrollPage = () => {
         },
       });
       if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+        throw new Error(`Error fetching data: ${response.statusText}`);
       }
       const data: PayrollEmployee[] = await response.json();
       setPayrollData(data);
     } catch (err) {
-      console.error("Failed to fetch payroll data:", err);
-      setError('Failed to load payroll data.');
+      const error = err as Error;
+      showModal('error', 'Failed to Load Data', error.message || 'Could not retrieve payroll data from the server.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // This effect now only fetches the payroll data
     fetchPayrollData();
   }, [fetchPayrollData]);
+
+  const showModal = (type: ModalState['type'], title: string, message: string, onConfirm?: () => void) => {
+    setModalState({ isOpen: true, type, title, message, onConfirm });
+  };
+
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
 
   const filteredData = useMemo(() => {
     return payrollData.filter(employee =>
@@ -123,19 +131,19 @@ const PayrollPage = () => {
         a.click();
         a.remove();
         window.URL.revokeObjectURL(url);
-        alert('Payroll report exported successfully!');
+        showModal('success', 'Export Successful', 'The payroll report has been downloaded.');
       } else {
         const errorText = await response.text();
-        console.error('Export failed:', response.status, errorText);
-        alert('Failed to export payroll report. Please try again.');
+        throw new Error(errorText || 'Failed to export the report due to a server error.');
       }
     } catch (error) {
-      console.error('Error during export:', error);
-      alert('An error occurred during export.');
+      const err = error as Error;
+      console.error('Error during export:', err);
+      showModal('error', 'Export Failed', err.message);
     }
   };
-
-  const openModal = (employee?: PayrollEmployee) => {
+  
+  const openFormModal = (employee?: PayrollEmployee) => {
     if (employee) {
       setNewPayroll({
         employeeName: employee.employeeName,
@@ -149,11 +157,11 @@ const PayrollPage = () => {
       setNewPayroll({ employeeName: '', ctc: 0, salaryPerMonth: 0, deduction: 0, status: 'PENDING' });
       setEditEmployeeId(null);
     }
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeFormModal = () => {
+    setIsFormModalOpen(false);
     setEditEmployeeId(null);
     setNewPayroll({ employeeName: '', ctc: 0, salaryPerMonth: 0, deduction: 0, status: 'PENDING' });
   };
@@ -166,6 +174,7 @@ const PayrollPage = () => {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    closeFormModal();
     try {
       if (editEmployeeId) {
         setPayrollData(prevData =>
@@ -173,54 +182,52 @@ const PayrollPage = () => {
             emp.employeeId === editEmployeeId ? { ...emp, ...newPayroll, netSalary: newPayroll.salaryPerMonth - newPayroll.deduction, updatedAt: new Date().toISOString() } : emp
           )
         );
-        alert('Payroll updated successfully!');
+        showModal('success', 'Update Successful', 'The payroll record has been updated.');
       } else {
         const newEmployeeId = payrollData.length > 0 ? Math.max(...payrollData.map(emp => emp.employeeId)) + 1 : 1;
         const now = new Date().toISOString();
         const newPayrollEntry: PayrollEmployee = { employeeId: newEmployeeId, ...newPayroll, netSalary: newPayroll.salaryPerMonth - newPayroll.deduction, createdAt: now, updatedAt: now };
         setPayrollData(prevData => [...prevData, newPayrollEntry]);
-        alert('New payroll added successfully!');
+        showModal('success', 'Payroll Added', 'A new payroll record has been created.');
       }
-      closeModal();
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err as Error;
-      console.error("Error submitting form:", error);
-      alert(`Error: ${error.message}`);
+      showModal('error', 'Submission Failed', error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this payroll record?')) return;
-    setLoading(true);
-    try {
-      setPayrollData(prevData => prevData.filter(emp => emp.employeeId !== id));
-      alert('Payroll record deleted successfully!');
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error("Error deleting payroll:", error);
-      alert(`Failed to delete payroll record: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleDelete = (id: number) => {
+    const confirmDelete = () => {
+        setLoading(true);
+        try {
+            setPayrollData(prevData => prevData.filter(emp => emp.employeeId !== id));
+            showModal('success', 'Deletion Successful', 'The payroll record has been deleted.');
+        } catch (err) {
+            const error = err as Error;
+            showModal('error', 'Deletion Failed', error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    showModal(
+        'confirmation',
+        'Confirm Deletion',
+        'Are you sure you want to delete this payroll record? This action cannot be undone.',
+        confirmDelete
+    );
+  };
+  
   if (loading && payrollData.length === 0) {
     return <div className="flex h-full items-center justify-center">Loading payroll data...</div>;
-  }
-  if (error) {
-    return <div className="flex h-full items-center justify-center text-red-500">{error}</div>;
   }
 
   return (
     <div>
-      {/* 
-        The local header section has been removed from this component.
-        The global Header from RootLayout.tsx now handles the title and user profile automatically.
-      */}
-
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="relative flex-1 max-w-full sm:max-w-md">
@@ -233,13 +240,12 @@ const PayrollPage = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-900 dark:text-white text-sm"
               />
             </div>
-
             <div className="flex items-center gap-2 sm:gap-3">
               <button onClick={handleExport} className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm" disabled={loading}>
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('payroll.export', 'Export PDF')}</span>
               </button>
-              <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm" disabled={loading}>
+              <button onClick={() => openFormModal()} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm" disabled={loading}>
                 <Plus className="w-4 h-4" />
                 <span>{t('payroll.addNew', 'Add New')}</span>
               </button>
@@ -247,8 +253,10 @@ const PayrollPage = () => {
           </div>
         </div>
 
+        
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
+           
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('payroll.employeeName')}</th>
@@ -260,6 +268,7 @@ const PayrollPage = () => {
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">{t('actions')}</th>
               </tr>
             </thead>
+          
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedData.length > 0 ? (
                 paginatedData.map((employee) => (
@@ -282,7 +291,7 @@ const PayrollPage = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap flex gap-2">
-                      <button onClick={() => openModal(employee)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Edit" disabled={loading}><Edit2 className="w-4 h-4 text-gray-500 dark:text-gray-300" /></button>
+                      <button onClick={() => openFormModal(employee)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Edit" disabled={loading}><Edit2 className="w-4 h-4 text-gray-500 dark:text-gray-300" /></button>
                       <button onClick={() => handleDelete(employee.employeeId)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Delete" disabled={loading}><Trash2 className="w-4 h-4 text-gray-500 dark:text-gray-300" /></button>
                     </td>
                   </tr>
@@ -294,6 +303,7 @@ const PayrollPage = () => {
           </table>
         </div>
 
+       
         <div className="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
             <div className="text-sm text-gray-700 dark:text-gray-300">
@@ -310,10 +320,11 @@ const PayrollPage = () => {
         </div>
       </div>
       
-      {isModalOpen && (
+     
+      {isFormModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button onClick={closeModal} className="absolute top-3 right-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" aria-label="Close modal" disabled={loading}><X className="w-6 h-6" /></button>
+            <button onClick={closeFormModal} className="absolute top-3 right-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" aria-label="Close modal" disabled={loading}><X className="w-6 h-6" /></button>
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{editEmployeeId ? 'Edit Payroll' : 'Add New Payroll'}</h2>
             <form onSubmit={handleFormSubmit} className="space-y-4 text-gray-900 dark:text-white">
               <div>
@@ -339,10 +350,62 @@ const PayrollPage = () => {
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" disabled={loading}>Cancel</button>
+                <button type="button" onClick={closeFormModal} className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition" disabled={loading}>Cancel</button>
                 <button type="submit" className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition" disabled={loading}>{loading ? (editEmployeeId ? 'Updating...' : 'Adding...') : (editEmployeeId ? 'Update Payroll' : 'Add Payroll')}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      
+     
+      {modalState.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4">
+              {modalState.type === 'success' && <CheckCircle className="h-12 w-12 text-green-500" />}
+              {modalState.type === 'error' && <XCircle className="h-12 w-12 text-red-500" />}
+              {modalState.type === 'confirmation' && <AlertTriangle className="h-12 w-12 text-yellow-500" />}
+            </div>
+            <h3 className="text-lg leading-6 font-semibold text-gray-900 dark:text-white" id="modal-title">
+              {modalState.title}
+            </h3>
+            <div className="mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {modalState.message}
+              </p>
+            </div>
+            <div className="mt-5 sm:mt-6 flex justify-center gap-3">
+              {modalState.type === 'confirmation' ? (
+                <>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    onClick={closeModal}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700"
+                    onClick={() => {
+                      modalState.onConfirm?.();
+                      closeModal();
+                    }}
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700"
+                  onClick={closeModal}
+                >
+                  OK
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
