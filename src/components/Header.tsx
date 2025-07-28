@@ -1,182 +1,173 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-import { useRouter } from 'next/navigation';
-import { Search, Bell, LogOut, User } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Search, LogOut, ChevronDown, Menu } from 'lucide-react'; 
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/components/AuthContext'; // Adjust path based on your project
+// FIX: The useAuth context is no longer needed for displaying user info, so it's removed.
+// import { useAuth } from '@/components/AuthContext';
 
-export default function Header() {
-  const { t, i18n } = useTranslation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [ready, setReady] = useState(false);
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+export default function Header({ onMenuToggle }: HeaderProps) {
+  const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
-  const { user } = useAuth(); 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // FIX: Create state to hold the user's name and role.
+  // We initialize them with default values.
+  const [userName, setUserName] = useState('User');
+  const [userRole, setUserRole] = useState('Guest');
+
+  // FIX: This useEffect hook runs only on the client-side after the component mounts.
+  // This is the correct place to safely access localStorage.
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+    const storedUserRole = localStorage.getItem('userRole');
+
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+    if (storedUserRole) {
+      setUserRole(storedUserRole);
+    }
+  }, []); // The empty array ensures this runs only once on mount.
+
+
+  const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const getStaticPageTitle = () => {
+    const currentPath = pathname.split('/')[1] || 'dashboard';
+    switch (currentPath) {
+      case 'employees': return t('pageTitles.employees', 'All Employees');
+      case 'department': return t('pageTitles.department', 'All Departments');
+      case 'attendance': return t('pageTitles.attendance', 'Attendance');
+      case 'payroll': return t('pageTitles.payroll', 'Payroll');
+      case 'jobs': return t('pageTitles.jobs', 'Jobs');
+      case 'candidates': return t('pageTitles.candidates', 'Candidates');
+      case 'leaves': return t('pageTitles.leaves', 'Leaves');
+      case 'holidays': return t('pageTitles.holidays', 'Holidays');
+      case 'settings': return t('pageTitles.settings', 'Settings');
+      case 'profile': return t('pageTitles.profile', 'My Profile');
+      case 'search': return t('pageTitles.search', 'Search Results');
+      default: return t('pageTitles.dashboard', 'Dashboard');
+    }
+  };
+
+  const getGreeting = () => {
+    if (currentHour < 12) return t('header.goodMorning', 'Good Morning');
+    if (currentHour < 17) return t('header.goodAfternoon', 'Good Afternoon');
+    return t('header.goodEvening', 'Good Evening');
+  };
+
+  // FIX: The logout function now clears all relevant items from localStorage.
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('employeeId');
+    router.push('/'); // Redirect to the main login page
+  };
 
   useEffect(() => {
-    // Theme detection logic
-    const checkTheme = () => {
-      if (typeof window !== 'undefined') {
-        const savedTheme = localStorage.getItem('theme');
-        const isDark = document.documentElement.classList.contains('dark');
-        setIsDarkMode(savedTheme === 'dark' || isDark);
-      }
-    };
-
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'theme') checkTheme();
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', handleStorageChange);
-    }
-
-    // Wait for i18n initialization
-    if (i18n.isInitialized) {
-      setReady(true);
-    } else {
-      const onInit = () => setReady(true);
-      i18n.on('initialized', onInit);
-      return () => i18n.off('initialized', onInit);
-    }
-
-    // Update hour every minute
     const timer = setInterval(() => setCurrentHour(new Date().getHours()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-    return () => {
-      observer.disconnect();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', handleStorageChange);
-      }
-      clearInterval(timer);
-    };
-  }, [i18n]);
-
-  // Don't render translations before i18n is ready to avoid hydration errors
-  if (!ready) return null;
-
-  // Use translation keys for greetings with dynamic time-based logic
-  const getGreeting = () => {
-    if (currentHour < 12) return t('header.goodMorning');
-    if (currentHour < 17) return t('header.goodAfternoon');
-    return t('header.goodEvening');
-  };
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-    }
-    router.push('/loginForm');
-  };
-
-  // Fallback to localStorage if AuthContext is not available
-  const loggedInUser = user || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {});
-  const userName = loggedInUser.fullName || 'User';
-  const userRole = loggedInUser.role || t('header.hrManager');
+  const userInitials = userName.includes(' ')
+    ? userName.split(' ').map((n: string) => n[0]).join('')
+    : userName.slice(0, 2);
 
   return (
     <>
-      {/* Overlay */}
       {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm"
-          onClick={() => setDropdownOpen(false)}
-        />
+        <div className="fixed inset-0 z-30" onClick={() => setDropdownOpen(false)} />
       )}
 
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8 relative z-40">
-        {/* Left: Greeting */}
-        <div className="w-full md:w-auto">
-          <h1 className={`text-xl sm:text-2xl font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {t('header.helloUser', { name: userName })} 👋
-          </h1>
-          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            {getGreeting()}
-          </p>
+      <header className="relative z-30 flex justify-between items-center gap-4 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        
+        {/* Left Side: Hamburger Menu (mobile) + Title */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onMenuToggle} 
+            className="p-2 rounded-md lg:hidden text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Page Title / Greeting */}
+          <div>
+            {pathname.startsWith('/dashboard') ? (
+              <>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                  {/* FIX: This now uses the userName from our state */}
+                  {t('header.helloUser', { name: userName, defaultValue: `Hello, ${userName}` })} 👋
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{getGreeting()}</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                  {getStaticPageTitle()}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('header.manageRecordsSubtitle', 'View and manage all records for this section.')}
+                </p>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Right: Search, Bell, Profile */}
-        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 w-full md:w-auto">
-          {/* Search */}
-          <div className="relative w-full md:w-64">
-            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+        {/* Right Side: Search and Profile Dropdown */}
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="relative w-full max-w-xs md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
-              placeholder={t('header.searchPlaceholder')}
-              className={`w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                isDarkMode
-                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              placeholder={t('header.searchPlaceholder', 'Search...')}
+              className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
             />
           </div>
 
-          {/* Notifications */}
-          <button className={`relative ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'}`}>
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-          </button>
-
-          {/* Profile Dropdown */}
           <div className="relative">
-            <div
-              onClick={() => setDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'}`}>
-                {userName.charAt(0).toUpperCase()}
+            <div onClick={() => setDropdownOpen((prev) => !prev)} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 flex-shrink-0">
+                {userInitials.toUpperCase()}
               </div>
-              <div className="hidden sm:flex flex-col">
-                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {userName}
-                </span>
-                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {userRole}
-                </span>
+              <div className="hidden sm:flex flex-col text-left">
+                {/* FIX: These now use the state variables that read from localStorage */}
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{userName}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{userRole}</span>
               </div>
-              <svg
-                className={`w-4 h-4 ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} hidden sm:block`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <ChevronDown className="w-5 h-5 text-gray-400 hidden sm:block" />
             </div>
 
             {dropdownOpen && (
-              <div
-                className={`absolute right-0 top-full mt-2 w-48 border rounded-lg shadow-lg p-2 z-50 ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'
-                }`}
-              >
-                <button
-                  onClick={() => router.push('/profile')}
-                  className="flex items-center w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  {t('header.myProfile')}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-3 py-2 text-sm rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900"
-                >
+              <div className="absolute right-0 top-full mt-2 w-48 border rounded-lg shadow-lg p-2 z-50 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white">
+                <button onClick={handleLogout} className="flex items-center w-full px-3 py-2 text-sm text-left rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50">
                   <LogOut className="w-4 h-4 mr-2" />
-                  {t('header.logout')}
+                  {t('header.logout', 'Logout')}
                 </button>
               </div>
             )}
           </div>
         </div>
-      </div>
+      </header>
     </>
   );
 }

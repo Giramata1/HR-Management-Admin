@@ -1,0 +1,41 @@
+{
+  "employees": [
+    {
+      "id": 1,
+      "profileImage": "https://i.pravatar.cc/150?img=12",
+      "personalInfo": {
+        "firstName": "Robert",
+        "lastName": "Allen",
+        "mobileNumber": "123-456-7890",
+        "email": "robert.allen@example.com",
+        "dateOfBirth": "1990-05-15",
+        "maritalStatus": "Single",
+        "gender": "Male",
+        "nationality": "American",
+        "address": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "zipCode": "10001"
+      },
+      "professionalInfo": {
+        "employeeId": "EMP001",
+        "userName": "robert.a",
+        "employeeType": "Permanent",
+        "emailAddress": "robert.allen@work.com",
+        "department": "Engineering",
+        "designation": "Software Engineer",
+        "joiningDate": "2022-08-01",
+        "officeLocation": "New York"
+      },
+      "documents": [
+        { "title": "Appointment Letter", "fileName": "appointment.pdf" },
+        { "title": "ID Proof", "fileName": "id_proof.pdf" }
+      ],
+      "accountAccess": {
+        "slackId": "@robert",
+        "skypeId": "robert.allen",
+        "githubId": "robert-allen-dev"
+      }
+    }
+  ]
+}

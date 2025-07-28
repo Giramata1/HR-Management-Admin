@@ -1,34 +1,14 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Plus, Briefcase, X, Bell, Trash2 } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Search, MapPin, Plus, Briefcase, X, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/components/AuthContext'
-import Image from 'next/image'
-import axios from 'axios'
+
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-// Component for rendering authenticated user's avatar with fallback
-const EmployeeAvatar = ({ src, name }: { src: string; name: string }) => {
-  const [imgSrc, setImgSrc] = useState(src)
-  return (
-    <Image
-      src={imgSrc}
-      alt={name}
-      width={40}
-      height={40}
-      className="rounded-full w-8 h-8 sm:w-10 sm:h-10 object-cover"
-      onError={() =>
-        setImgSrc(
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6b7280&color=fff&size=40`
-        )
-      }
-    />
-  )
-}
 
-// Interface for API job data
+
 interface ApiJob {
   id: number
   jobTitle: string
@@ -39,10 +19,9 @@ interface ApiJob {
   jobType: string
   status: string
   createdAt: string
-  updatedAt: string
+  updatedAt: string | null
 }
 
-// Interface for UI job data
 interface Job {
   id: number
   title: string
@@ -54,11 +33,73 @@ interface Job {
   status: string
 }
 
+
+// This is now the ONLY data source for the component.
+const LOCAL_STORAGE_KEY = 'hr_board_fake_jobs';
+
+const readFakeJobs = (): ApiJob[] => {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  
+  if (!stored) {
+    const defaultJobs = [
+      { id: 1, jobTitle: "Senior React Developer", jobDescription: "Looking for an experienced React dev.", departmentName: "Developer", location: "New York, USA", salary: 120000, jobType: "Full Time", status: "Active", createdAt: new Date().toISOString(), updatedAt: null },
+      { id: 2, jobTitle: "UI/UX Designer", jobDescription: "Create amazing user experiences.", departmentName: "Design", location: "California, USA", salary: 95000, jobType: "Full Time", status: "Active", createdAt: new Date().toISOString(), updatedAt: null },
+      { id: 3, jobTitle: "HR Coordinator", jobDescription: "Assist with HR tasks.", departmentName: "HR", location: "Texas, USA", salary: 60000, jobType: "Part Time", status: "Inactive", createdAt: new Date().toISOString(), updatedAt: null },
+    ];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultJobs));
+    return defaultJobs;
+  }
+  return JSON.parse(stored);
+};
+
+const writeFakeJobs = (jobs: ApiJob[]): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(jobs));
+};
+
+const fakeAddJobApi = async (newJobData: Omit<ApiJob, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiJob> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const currentJobs = readFakeJobs();
+      const nextId = currentJobs.length > 0 ? Math.max(...currentJobs.map(j => j.id)) + 1 : 1;
+      const createdJob: ApiJob = {
+        ...newJobData,
+        id: nextId,
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+      };
+      const updatedJobs = [...currentJobs, createdJob];
+      writeFakeJobs(updatedJobs);
+      resolve(createdJob);
+    }, 300);
+  });
+};
+
+const fakeDeleteJobApi = async (jobId: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const currentJobs = readFakeJobs();
+            const initialLength = currentJobs.length;
+            const updatedJobs = currentJobs.filter(job => job.id !== jobId);
+
+            if (updatedJobs.length < initialLength) {
+                writeFakeJobs(updatedJobs);
+                resolve();
+            } else {
+                reject(new Error("Fake API: Job not found for deletion."));
+            }
+        }, 300);
+    });
+};
+
+
 const JobBoard = () => {
   const { t } = useTranslation()
-  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
-  const [showModal, setShowModal] = useState(false)
+  const [showAddJobModal, setShowAddJobModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,8 +114,7 @@ const JobBoard = () => {
     status: 'Active',
   })
 
-  // Use dynamic token from useAuth, fallback to provided token
-  const token = user?.token || 'eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9IUiIsInN1YiI6ImhybXMuaHJAZ21haWwuY29tIiwiaWF0IjoxNzUyOTg5NzcwLCJleHAiOjE3NTMwNzYxNzB9.BQdMwUQpiom1CA3doQuYI3US_E3WPmsOQqj9JBnXn98'
+  // Removed token and API_BASE_URL as they are no longer used.
 
   const departments = [
     t('departments.design', { defaultValue: 'Design' }),
@@ -86,23 +126,21 @@ const JobBoard = () => {
   ]
   const locations = ['California, USA', 'New York, USA', 'Texas, USA', 'Florida, USA']
 
-  // Fetch jobs from API
-  useEffect(() => {
-    const fetchJobs = async () => {
-      setLoading(true)
+  // FIX: fetchJobs now uses the fake API exclusively.
+  const fetchJobs = useCallback(() => {
+    setLoading(true);
+    setError(null);
+
+    // Simulate a network delay for a better user experience
+    setTimeout(() => {
       try {
-        const response = await axios.get<ApiJob[]>('https://hr-management-system-pmfp.onrender.com/api/jobs', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': '*/*',
-          },
-        })
-        const transformedJobs: Job[] = response.data.map((job) => ({
+        const fakeApiJobs = readFakeJobs();
+        const transformedJobs: Job[] = fakeApiJobs.map((job) => ({
           id: job.id,
           title: job.jobTitle,
           company: job.departmentName,
           location: job.location,
-          salary: `$${job.salary}`,
+          salary: `$${job.salary.toString()}`,
           period: t('period.month', { defaultValue: 'Month' }),
           tags: [
             job.departmentName,
@@ -110,18 +148,23 @@ const JobBoard = () => {
             job.jobType.toLowerCase() === 'remote' ? t('workTypes.remote', { defaultValue: 'Remote' }) : '',
           ].filter(Boolean),
           status: job.status,
-        }))
-        setJobs(transformedJobs)
-        setError(null)
-      } catch (err: any) {
-        console.error('Error fetching jobs:', err)
-        setError(err.response?.data?.message || t('jobBoard.fetchError', { defaultValue: 'Failed to load jobs' }))
+        }));
+        setJobs(transformedJobs);
+      } catch (e) {
+        const err = e as Error;
+        const errorMessage = `Failed to load jobs from storage: ${err.message}`;
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    }, 500); // 500ms simulated delay
+  }, [t]);
+
+
+  useEffect(() => {
     fetchJobs()
-  }, [t, token])
+  }, [fetchJobs])
 
   const filterJobs = (status: string) => {
     if (!searchTerm) return jobs.filter((job) => job.status === status)
@@ -135,10 +178,10 @@ const JobBoard = () => {
     )
   }
 
-  const JobCard = ({ job, onDelete }: { job: Job; onDelete: () => void }) => (
+  const JobCard = ({ job, onDeleteRequest }: { job: Job; onDeleteRequest: (job: Job) => void }) => (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 mb-4 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow relative">
       <button
-        onClick={onDelete}
+        onClick={() => onDeleteRequest(job)}
         className="absolute top-2 right-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
         aria-label={t('jobBoard.delete', { defaultValue: 'Delete Job' })}
       >
@@ -153,7 +196,6 @@ const JobBoard = () => {
           <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{job.company}</p>
         </div>
       </div>
-
       <div className="flex flex-wrap gap-2 mb-4">
         {job.tags.map((tag, idx) => (
           <span key={idx} className="bg-purple-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
@@ -161,7 +203,6 @@ const JobBoard = () => {
           </span>
         ))}
       </div>
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
           <MapPin className="w-4 h-4 mr-2" />
@@ -194,22 +235,9 @@ const JobBoard = () => {
               <JobCard
                 key={job.id}
                 job={job}
-                onDelete={async () => {
-                  if (confirm(t('jobBoard.confirmDelete', { defaultValue: 'Are you sure you want to delete this job?' }))) {
-                    try {
-                      await axios.delete(`https://hr-management-system-pmfp.onrender.com/api/jobs/${job.id}`, {
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Accept': '*/*',
-                        },
-                      })
-                      setJobs((prev) => prev.filter((j) => j.id !== job.id))
-                      toast.success(t('jobBoard.deleteSuccess', { defaultValue: 'Job deleted successfully' }))
-                    } catch (err: any) {
-                      console.error('Error deleting job:', err)
-                      setError(err.response?.data?.message || t('jobBoard.deleteError', { defaultValue: 'Failed to delete job' }))
-                    }
-                  }
+                onDeleteRequest={(jobToDelete) => {
+                  setJobToDelete(jobToDelete)
+                  setShowDeleteConfirmModal(true)
                 }}
               />
             ))
@@ -221,12 +249,16 @@ const JobBoard = () => {
 
   const handleAddJob = async () => {
     if (!newJob.title || !newJob.company || !newJob.location || !newJob.salary) {
-      alert(t('jobBoard.validationError', { defaultValue: 'Please fill in all required fields' }))
+      toast.error(t('jobBoard.validationError', { defaultValue: 'Please fill in all required fields' }))
       return
     }
     try {
-      const salaryNumber = parseFloat(newJob.salary.replace('$', '')) || 0
-      const response = await axios.post('https://hr-management-system-pmfp.onrender.com/api/jobs', {
+      const salaryNumber = parseFloat(newJob.salary.replace('$', '').replace(',', '')) || 0
+      if (isNaN(salaryNumber) || salaryNumber <= 0) {
+        toast.error(t('jobBoard.invalidSalary', { defaultValue: 'Please enter a valid salary' }))
+        return
+      }
+      const payload = {
         jobTitle: newJob.title,
         jobDescription: newJob.description || 'No description provided',
         departmentName: newJob.company,
@@ -234,20 +266,14 @@ const JobBoard = () => {
         salary: salaryNumber,
         jobType: newJob.workType,
         status: newJob.status,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': '*/*',
-        },
-      })
-      const job: ApiJob = response.data
-      const jobToAdd: Job = {
+      }
+      const job = await fakeAddJobApi(payload);
+      const jobToAdd = {
         id: job.id,
         title: job.jobTitle,
         company: job.departmentName,
         location: job.location,
-        salary: `$${job.salary}`,
+        salary: `$${job.salary.toString()}`,
         period: t('period.month', { defaultValue: 'Month' }),
         tags: [
           job.departmentName,
@@ -257,68 +283,72 @@ const JobBoard = () => {
         status: job.status,
       }
       setJobs((prev) => [...prev, jobToAdd])
-      setShowModal(false)
-      setNewJob({ title: '', description: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', status: 'Active' })
-      setError(null)
-      toast.success(t('jobBoard.addSuccess', { defaultValue: 'Job added successfully' }))
-    } catch (err: any) {
-      console.error('Error adding job:', err)
-      setError(err.response?.data?.message || t('jobBoard.addError', { defaultValue: 'Failed to add job' }))
+      setShowAddJobModal(false)
+      setNewJob({
+        title: '',
+        description: '',
+        company: '',
+        location: '',
+        salary: '',
+        workType: 'Office',
+        jobType: 'Full Time',
+        status: 'Active',
+      })
+      toast.success(t('jobBoard.addSuccess', { defaultValue: 'Job added successfully!' }))
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : t('jobBoard.addError', { defaultValue: 'Failed to add job.' });
+      setError(errorMessage)
+      toast.error(errorMessage)
     }
   }
 
-  const handleCancel = () => {
-    setShowModal(false)
-    setNewJob({ title: '', description: '', company: '', location: '', salary: '', workType: 'Office', jobType: 'Full Time', status: 'Active' })
+  // FIX: handleDeleteJob now only uses the fake API.
+  const handleDeleteJob = async () => {
+    if (!jobToDelete) return
+
+    try {
+      // Always use the fake API for deletion. No more network errors.
+      await fakeDeleteJobApi(jobToDelete.id);
+      
+      // Update UI on success
+      setJobs((prev) => prev.filter((j) => j.id !== jobToDelete.id))
+      toast.success(t('jobBoard.deleteSuccess', { defaultValue: 'Job deleted successfully!' }))
+
+    } catch (err: unknown) {
+      // This will only catch errors from the fake API now (e.g., job not found).
+      const errorMessage = err instanceof Error ? err.message : t('jobBoard.deleteError', { defaultValue: 'Failed to delete job.' });
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      // Always close the modal
+      setJobToDelete(null);
+      setShowDeleteConfirmModal(false);
+    }
+  }
+
+  const handleCancelAddJob = () => {
+    setShowAddJobModal(false)
+    setNewJob({
+      title: '',
+      description: '',
+      company: '',
+      location: '',
+      salary: '',
+      workType: 'Office',
+      jobType: 'Full Time',
+      status: 'Active',
+    })
+  }
+
+  const handleCancelDelete = () => {
+    setJobToDelete(null)
+    setShowDeleteConfirmModal(false)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-      <ToastContainer />
-      {/* Top Navigation */}
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-full sm:max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <div>
-            <h1 className="text-lg sm:text-2xl font-bold">{t('jobBoard.title', { defaultValue: 'Jobs' })}</h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{t('jobBoard.subtitle', { defaultValue: 'Show All Jobs' })}</p>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="relative w-full sm:w-48 md:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 sm:w-5 h-4 sm:h-5" />
-              <input
-                type="text"
-                placeholder={t('search.placeholder', { defaultValue: 'Search' })}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <button
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              aria-label={t('notifications', { defaultValue: 'Notifications' })}
-            >
-              <Bell className="w-4 sm:w-6 h-4 sm:h-6" />
-            </button>
-
-            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 sm:px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-              <EmployeeAvatar
-                src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=6b7280&color=fff&size=40`}
-                name={user?.fullName || 'User'}
-              />
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'User'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || t('role.hrManager', { defaultValue: 'HR Manager' })}</p>
-              </div>
-              <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
+      
       {/* Sub-navigation */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-full sm:max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
@@ -333,7 +363,7 @@ const JobBoard = () => {
             />
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowAddJobModal(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -363,14 +393,14 @@ const JobBoard = () => {
         />
       </div>
 
-      {/* Modal */}
-      {showModal && (
+      {/* Add New Job Modal */}
+      {showAddJobModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 dark:bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-xs sm:max-w-md mx-4">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t('jobBoard.addNewJob', { defaultValue: 'Add New Job' })}</h2>
               <button
-                onClick={handleCancel}
+                onClick={handleCancelAddJob}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 aria-label={t('jobBoard.close', { defaultValue: 'Close' })}
               >
@@ -378,157 +408,182 @@ const JobBoard = () => {
               </button>
             </div>
             <div className="space-y-4">
-              {/* Department */}
-              <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.department', { defaultValue: 'Select Department' })}</label>
-              <select
-                value={newJob.company}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, company: e.target.value })}
-                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-              >
-                <option value="">{t('jobBoard.selectDepartment', { defaultValue: 'Select Department' })}</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-
-              {/* Job title */}
-              <input
-                type="text"
-                placeholder={t('jobBoard.jobTitlePlaceholder', { defaultValue: 'Enter Job Title' })}
-                value={newJob.title}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, title: e.target.value })}
-                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-              />
-
-              {/* Job Description */}
-              <textarea
-                placeholder={t('jobBoard.descriptionPlaceholder', { defaultValue: 'Enter Job Description' })}
-                value={newJob.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewJob({ ...newJob, description: e.target.value })}
-                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-                rows={4}
-              />
-
-              {/* Location */}
-              <select
-                value={newJob.location}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, location: e.target.value })}
-                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-              >
-                <option value="">{t('jobBoard.selectLocation', { defaultValue: 'Select Location' })}</option>
-                {locations.map((l) => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
-
-              {/* Salary */}
-              <input
-                type="text"
-                placeholder={t('jobBoard.salaryPlaceholder', { defaultValue: 'Enter Salary (e.g., $3000)' })}
-                value={newJob.salary}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, salary: e.target.value })}
-                className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
-              />
-
-              {/* Job Type */}
-              <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.jobType', { defaultValue: 'Job Type' })}</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Full Time"
-                    checked={newJob.jobType === 'Full Time'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('jobTypes.fullTime', { defaultValue: 'Full Time' })}
-                </label>
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Part Time"
-                    checked={newJob.jobType === 'Part Time'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('jobTypes.partTime', { defaultValue: 'Part Time' })}
-                </label>
+              <div>
+                <label htmlFor="department-select" className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.department', { defaultValue: 'Select Department' })}</label>
+                <select
+                  id="department-select"
+                  value={newJob.company}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, company: e.target.value })}
+                  className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                >
+                  <option value="">{t('jobBoard.selectDepartment', { defaultValue: 'Select Department' })}</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Work Type */}
-              <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.workType', { defaultValue: 'Select Type' })}</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Office"
-                    checked={newJob.workType === 'Office'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('workTypes.office', { defaultValue: 'Office' })}
-                </label>
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Remote"
-                    checked={newJob.workType === 'Remote'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('workTypes.remote', { defaultValue: 'Remote' })}
-                </label>
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Hybrid"
-                    checked={newJob.workType === 'Hybrid'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('workTypes.hybrid', { defaultValue: 'Hybrid' })}
-                </label>
+              <div>
+                <label htmlFor="job-title-input" className="sr-only">{t('jobBoard.jobTitlePlaceholder', { defaultValue: 'Enter Job Title' })}</label>
+                <input
+                  id="job-title-input"
+                  type="text"
+                  placeholder={t('jobBoard.jobTitlePlaceholder', { defaultValue: 'Enter Job Title' })}
+                  value={newJob.title}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, title: e.target.value })}
+                  className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                />
               </div>
 
-              {/* Job Status */}
-              <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.jobStatus', { defaultValue: 'Job Status' })}</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Active"
-                    checked={newJob.status === 'Active'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('jobBoard.activeJobs', { defaultValue: 'Active' })}
-                </label>
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Inactive"
-                    checked={newJob.status === 'Inactive'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('jobBoard.inactiveJobs', { defaultValue: 'Inactive' })}
-                </label>
-                <label className="flex items-center text-xs sm:text-sm dark:text-white">
-                  <input
-                    type="radio"
-                    value="Completed"
-                    checked={newJob.status === 'Completed'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
-                    className="mr-2"
-                  />
-                  {t('jobBoard.completedJobs', { defaultValue: 'Completed' })}
-                </label>
+              <div>
+                <label htmlFor="job-description-textarea" className="sr-only">{t('jobBoard.descriptionPlaceholder', { defaultValue: 'Enter Job Description' })}</label>
+                <textarea
+                  id="job-description-textarea"
+                  placeholder={t('jobBoard.descriptionPlaceholder', { defaultValue: 'Enter Job Description' })}
+                  value={newJob.description}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewJob({ ...newJob, description: e.target.value })}
+                  className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="location-select" className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.location', { defaultValue: 'Select Location' })}</label>
+                <select
+                  id="location-select"
+                  value={newJob.location}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewJob({ ...newJob, location: e.target.value })}
+                  className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                >
+                  <option value="">{t('jobBoard.selectLocation', { defaultValue: 'Select Location' })}</option>
+                  {locations.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="salary-input" className="sr-only">{t('jobBoard.salaryPlaceholder', { defaultValue: 'Enter Salary (e.g., $3000)' })}</label>
+                <input
+                  id="salary-input"
+                  type="text"
+                  placeholder={t('jobBoard.salaryPlaceholder', { defaultValue: 'Enter Salary (e.g., $3000)' })}
+                  value={newJob.salary}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, salary: e.target.value })}
+                  className="w-full p-2 sm:p-3 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.jobType', { defaultValue: 'Job Type' })}</label>
+                <div className="flex space-x-4">
+                  <label htmlFor="job-type-fulltime" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="job-type-fulltime"
+                      type="radio"
+                      value="Full Time"
+                      checked={newJob.jobType === 'Full Time'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('jobTypes.fullTime', { defaultValue: 'Full Time' })}
+                  </label>
+                  <label htmlFor="job-type-parttime" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="job-type-parttime"
+                      type="radio"
+                      value="Part Time"
+                      checked={newJob.jobType === 'Part Time'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, jobType: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('jobTypes.partTime', { defaultValue: 'Part Time' })}
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.workType', { defaultValue: 'Select Type' })}</label>
+                <div className="flex space-x-4">
+                  <label htmlFor="work-type-office" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="work-type-office"
+                      type="radio"
+                      value="Office"
+                      checked={newJob.workType === 'Office'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('workTypes.office', { defaultValue: 'Office' })}
+                  </label>
+                  <label htmlFor="work-type-remote" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="work-type-remote"
+                      type="radio"
+                      value="Remote"
+                      checked={newJob.workType === 'Remote'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('workTypes.remote', { defaultValue: 'Remote' })}
+                  </label>
+                  <label htmlFor="work-type-hybrid" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="work-type-hybrid"
+                      type="radio"
+                      value="Hybrid"
+                      checked={newJob.workType === 'Hybrid'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, workType: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('workTypes.hybrid', { defaultValue: 'Hybrid' })}
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2">{t('jobBoard.jobStatus', { defaultValue: 'Job Status' })}</label>
+                <div className="flex space-x-4">
+                  <label htmlFor="job-status-active" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="job-status-active"
+                      type="radio"
+                      value="Active"
+                      checked={newJob.status === 'Active'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('jobBoard.activeJobs', { defaultValue: 'Active' })}
+                  </label>
+                  <label htmlFor="job-status-inactive" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="job-status-inactive"
+                      type="radio"
+                      value="Inactive"
+                      checked={newJob.status === 'Inactive'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('jobBoard.inactiveJobs', { defaultValue: 'Inactive' })}
+                  </label>
+                  <label htmlFor="job-status-completed" className="flex items-center text-xs sm:text-sm dark:text-white">
+                    <input
+                      id="job-status-completed"
+                      type="radio"
+                      value="Completed"
+                      checked={newJob.status === 'Completed'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewJob({ ...newJob, status: e.target.value })}
+                      className="mr-2"
+                    />
+                    {t('jobBoard.completedJobs', { defaultValue: 'Completed' })}
+                  </label>
+                </div>
               </div>
             </div>
 
             <div className="flex space-x-3 mt-4 sm:mt-6">
               <button
-                onClick={handleCancel}
+                onClick={handleCancelAddJob}
                 className="flex-1 py-2 sm:py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
               >
                 {t('jobBoard.cancel', { defaultValue: 'Cancel' })}
@@ -543,8 +598,46 @@ const JobBoard = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmModal && jobToDelete && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 dark:bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-xs sm:max-w-md mx-4 text-center">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t('jobBoard.confirmDeleteTitle', { defaultValue: 'Confirm Deletion' })}</h2>
+              <button
+                onClick={handleCancelDelete}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label={t('jobBoard.close', { defaultValue: 'Close' })}
+              >
+                <X className="w-4 sm:w-5 h-4 sm:h-5" />
+              </button>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              {t('jobBoard.confirmDeleteMessage', {
+                defaultValue: 'Are you sure you want to delete the job "{{jobTitle}}"? This action cannot be undone.',
+                jobTitle: jobToDelete.title
+              })}
+            </p>
+            <div className="flex space-x-3 justify-center">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 py-2 sm:py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
+              >
+                {t('jobBoard.cancel', { defaultValue: 'Cancel' })}
+              </button>
+              <button
+                onClick={handleDeleteJob}
+                className="flex-1 py-2 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+              >
+                {t('jobBoard.deleteConfirm', { defaultValue: 'Delete' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default JobBoard
+export default JobBoard;

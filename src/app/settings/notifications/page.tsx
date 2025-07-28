@@ -1,100 +1,155 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Search, Bell, ChevronDown, User, Lock } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, Lock, Briefcase, MessageSquare, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+// --- IMPORTANT: API Configuration ---
+// This token will expire. You must replace it with a valid token from your authentication system.
+const API_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiSFIiLCJzdWIiOiJocm1zLmhyQGdtYWlsLmNvbSIsImlhdCI6MTc1MzM0MTc2MywiZXhwIjoxNzU2MzY1NzYzfQ.iaOSsbzXNRW3ZBX12aD-Z9BxadBSftpFUekugRHZmEQ';
+const API_BASE_URL = 'https://hr-management-system-pmfp.onrender.com/api/notifications';
+
+// --- TYPE DEFINITIONS ---
+interface ApiNotification {
+  id: number;
+  message: string;
+  timestamp: string;
+  recipient: {
+    id: number;
+    fullName: string;
+  };
+}
 
 interface NotificationItem {
   id: string;
-  type: 'user' | 'system' | 'job' | 'feedback' | 'security';
+  type: 'user' | 'system' | 'job' | 'feedback' | 'security' | 'default';
   title: string;
   message: string;
   time: string;
-  avatar?: string;
   icon?: React.ReactNode;
   iconBg?: string;
 }
 
 const Notifications = () => {
+  // --- STATE MANAGEMENT ---
   const { t } = useTranslation();
-  const [notifications] = useState<NotificationItem[]>([
-    {
-      id: '1',
-      type: 'user',
-      title: t('notifications.leaveRequest.title', { defaultValue: 'Leave Request' }),
-      message: t('notifications.leaveRequest.message', { defaultValue: '@Robert Fox has applied for leave' }),
-      time: t('notifications.time.justNow', { defaultValue: 'Just Now' }),
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    },
-    {
-      id: '2',
-      type: 'system',
-      title: t('notifications.checkInIssue.title', { defaultValue: 'Check In Issue' }),
-      message: t('notifications.checkInIssue.message', { defaultValue: '@Alexa shared a message regarding check in issue' }),
-      time: t('notifications.time.at1116', { defaultValue: '11:16 AM' }),
-    },
-    {
-      id: '3',
-      type: 'job',
-      title: t('notifications.jobApplication.title', { defaultValue: 'Applied job for "Sales Manager" Position' }),
-      message: t('notifications.jobApplication.message', { defaultValue: '@Shane Watson has applied for job' }),
-      time: t('notifications.time.at0900', { defaultValue: '09:00 AM' }),
-      icon: <User className="h-4 w-4 text-purple-600" />,
-      iconBg: 'bg-purple-100 dark:bg-purple-900',
-    },
-    {
-      id: '4',
-      type: 'feedback',
-      title: t('notifications.feedback.title', { defaultValue: 'Robert Fox has shared his feedback' }),
-      message: t('notifications.feedback.message', { defaultValue: '"It was an amazing experience with your organisation"' }),
-      time: t('notifications.time.yesterday', { defaultValue: 'Yesterday' }),
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    },
-    {
-      id: '5',
-      type: 'security',
-      title: t('notifications.passwordUpdate.title', { defaultValue: 'Password Update Successfully' }),
-      message: t('notifications.passwordUpdate.message', { defaultValue: 'Your password has been updated successfully' }),
-      time: t('notifications.time.yesterday', { defaultValue: 'Yesterday' }),
-      icon: <Lock className="h-4 w-4 text-purple-600" />,
-      iconBg: 'bg-purple-100 dark:bg-purple-900',
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // --- UTILITY FUNCTIONS (MEMOIZED) ---
+  const formatTime = useCallback((timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, []);
 
+  const getNotificationDetails = useCallback((message: string): { type: NotificationItem['type'], icon: React.ReactNode, iconBg: string, title: string } => {
+    const lowerCaseMessage = message.toLowerCase();
+    if (lowerCaseMessage.includes('leave')) return { type: 'user', icon: <User className="h-4 w-4 text-blue-600" />, iconBg: 'bg-blue-100', title: t('notifications.leaveRequest.title', { defaultValue: 'Leave Request' }) };
+    if (lowerCaseMessage.includes('job')) return { type: 'job', icon: <Briefcase className="h-4 w-4 text-green-600" />, iconBg: 'bg-green-100', title: t('notifications.jobApplication.titleAlt', { defaultValue: 'Job Application' }) };
+    if (lowerCaseMessage.includes('feedback')) return { type: 'feedback', icon: <MessageSquare className="h-4 w-4 text-indigo-600" />, iconBg: 'bg-indigo-100', title: t('notifications.feedback.titleAlt', { defaultValue: 'New Feedback' }) };
+    if (lowerCaseMessage.includes('password')) return { type: 'security', icon: <Lock className="h-4 w-4 text-red-600" />, iconBg: 'bg-red-100', title: t('notifications.passwordUpdate.title', { defaultValue: 'Password Update' }) };
+    return { type: 'default', icon: <Bell className="h-4 w-4 text-gray-600" />, iconBg: 'bg-gray-100', title: t('notifications.systemUpdate.title', { defaultValue: 'System Notification' }) };
+  }, [t]);
+
+  // --- API FUNCTIONS ---
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/all`, {
+        headers: { 'Authorization': API_TOKEN }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: Failed to fetch notifications. Is your token valid?`);
+      }
+      
+      const rawBody = await response.text();
+      // Handle potentially malformed JSON from the API
+      const jsonEndIndex = rawBody.lastIndexOf('}]');
+      const jsonString = jsonEndIndex === -1 ? rawBody : rawBody.substring(0, jsonEndIndex + 2);
+      
+      const apiData: ApiNotification[] = JSON.parse(jsonString);
+      const formatted = apiData.map(item => {
+        const { type, icon, iconBg, title } = getNotificationDetails(item.message);
+        return {
+          id: item.id.toString(),
+          type,
+          title,
+          message: item.message,
+          time: formatTime(item.timestamp),
+          icon,
+          iconBg,
+        };
+      }).sort((a, b) => b.id.localeCompare(a.id)); // Sort by ID descending (most recent)
+      
+      setNotifications(formatted);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      console.error("Fetch Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [formatTime, getNotificationDetails]);
+
+  const addNotification = async (message: string) => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/new`, {
+        method: 'POST',
+        headers: {
+          'Authorization': API_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, employeeId: 2 }),
+      });
+
+      if (!response.ok) {
+         const errorBody = await response.text();
+         throw new Error(`Error ${response.status}: Failed to send notification. Server says: ${errorBody}`);
+      }
+      
+      setNewMessage('');
+      await fetchNotifications(); // Refresh list on success
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred during submission.');
+       console.error("Submit Error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- EFFECTS ---
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+  
+  // --- EVENT HANDLERS ---
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim()) {
+      addNotification(newMessage);
+    }
+  };
+  
+  // --- RENDER LOGIC ---
   const NotificationCard = ({ notification }: { notification: NotificationItem }) => (
-    <div className="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-      {/* Avatar or Icon */}
-      <div className="flex-shrink-0">
-        {notification.avatar ? (
-          <Image
-            src={notification.avatar}
-            alt={notification.title}
-            width={40}
-            height={40}
-            className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
-          />
-        ) : (
-          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${notification.iconBg}`}>
-            {notification.icon}
-          </div>
-        )}
+    <div className="flex items-start space-x-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${notification.iconBg}`}>
+        {notification.icon}
       </div>
-
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-              {notification.title}
-            </h4>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              {notification.message}
-            </p>
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">{notification.title}</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{notification.message}</p>
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500 ml-3 sm:ml-4 flex-shrink-0">
-            {notification.time}
-          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 ml-4 flex-shrink-0">{notification.time}</span>
         </div>
       </div>
     </div>
@@ -102,76 +157,71 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
-              {t('notifications.title', { defaultValue: 'Notifications' })}
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {t('notifications.subtitle', { defaultValue: 'All Notifications' })}
-            </p>
+            <h1 className="text-2xl font-semibold">{t('notifications.title', { defaultValue: 'Notifications' })}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('notifications.subtitle', { defaultValue: 'All Notifications' })}</p>
           </div>
+          <div className="flex items-center space-x-4">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input type="text" placeholder={t('search.placeholder', { defaultValue: 'Search' })} className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg w-full text-sm"/>
+              </div>
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Bell className="h-5 w-5 text-gray-500 dark:text-gray-300" /></button>
+              <div className="flex items-center space-x-3">
+                  <Image src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User" width={40} height={40} className="rounded-full" />
+                  <div>
+                      <p className="text-sm font-medium">{t('user.name', { defaultValue: 'Robert Allen' })}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('role.hrManager', { defaultValue: 'HR Manager' })}</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+              </div>
+          </div>
+        </div>
+      </header>
 
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            {/* Search */}
-            <div className="relative w-full sm:w-48 md:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8">
+          <form onSubmit={handleSubmit} className="p-6">
+            <h3 className="text-lg font-medium mb-4">{t('notifications.addNew', { defaultValue: 'Send a New Notification' })}</h3>
+            <div className="flex items-center gap-4">
               <input
                 type="text"
-                placeholder={t('search.placeholder', { defaultValue: 'Search' })}
-                className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-full"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder={t('notifications.messagePlaceholder', { defaultValue: 'Enter message for employee #2...' })}
+                className="flex-grow bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                disabled={isSubmitting}
               />
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting || !newMessage.trim()}
+              >
+                <Send className="h-4 w-4" />
+                <span>{isSubmitting ? t('buttons.sending', { defaultValue: 'Sending...' }) : t('buttons.send', { defaultValue: 'Send' })}</span>
+              </button>
             </div>
-
-            {/* Notification Bell */}
-            <button
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              aria-label={t('notifications.bell', { defaultValue: 'Notifications' })}
-            >
-              <Bell className="h-4 sm:h-5 w-4 sm:w-5 text-gray-500 dark:text-gray-300" />
-            </button>
-
-            {/* User Profile */}
-            <div className="flex items-center space-x-2 sm:space-x-3 border border-gray-200 dark:border-gray-700 px-2 sm:px-3 py-2 rounded-md bg-white dark:bg-gray-800">
-              <Image
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                alt={t('user.name', { defaultValue: 'Robert Allen' })}
-                width={32}
-                height={32}
-                className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
-              />
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('user.name', { defaultValue: 'Robert Allen' })}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('role.hrManager', { defaultValue: 'HR Manager' })}
-                </p>
-              </div>
-              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            </div>
-          </div>
+          </form>
         </div>
-      </div>
 
-      {/* Notifications Content */}
-      <div className="max-w-full sm:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {notifications.length === 0 ? (
-              <div className="p-4 sm:p-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                {t('notifications.noRecords', { defaultValue: 'No notifications found' })}
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <NotificationCard key={notification.id} notification={notification} />
-              ))
+            {loading && <p className="p-6 text-center text-gray-500">{t('notifications.loading', { defaultValue: 'Loading...' })}</p>}
+            
+            {error && <p className="p-6 text-center text-red-500">{error}</p>}
+
+            {!loading && !error && notifications.length === 0 && (
+              <p className="p-6 text-center text-gray-500">{t('notifications.noRecords', { defaultValue: 'No notifications found.' })}</p>
             )}
+
+            {!loading && !error && notifications.map((notification) => (
+              <NotificationCard key={notification.id} notification={notification} />
+            ))}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

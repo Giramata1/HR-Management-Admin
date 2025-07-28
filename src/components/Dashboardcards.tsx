@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+// --- Interfaces ---
 interface MetricCard {
   titleKey: string
   value: string
@@ -20,48 +21,10 @@ interface MetricCard {
   icon: React.ReactNode
 }
 
-const metrics: MetricCard[] = [
-  {
-    titleKey: 'dashboard.totalEmployee',
-    value: '560',
-    change: '12%',
-    isPositive: true,
-    dateKey: 'dashboard.updateDate',
-    iconBg: 'bg-blue-50 text-blue-600',
-    iconBgDark: 'bg-blue-900/20 text-blue-400',
-    icon: <Users className="w-5 h-5" />
-  },
-  {
-    titleKey: 'dashboard.totalApplicant',
-    value: '1050',
-    change: '5%',
-    isPositive: true,
-    dateKey: 'dashboard.updateDate',
-    iconBg: 'bg-green-50 text-green-600',
-    iconBgDark: 'bg-green-900/20 text-green-400',
-    icon: <ClipboardList className="w-5 h-5" />
-  },
-  {
-    titleKey: 'dashboard.todayAttendance',
-    value: '470',
-    change: '8%',
-    isPositive: false,
-    dateKey: 'dashboard.updateDate',
-    iconBg: 'bg-red-50 text-red-600',
-    iconBgDark: 'bg-red-900/20 text-red-400',
-    icon: <BarChart2 className="w-5 h-5" />
-  },
-  {
-    titleKey: 'dashboard.totalProjects',
-    value: '250',
-    change: '12%',
-    isPositive: true,
-    dateKey: 'dashboard.updateDate',
-    iconBg: 'bg-purple-50 text-purple-600',
-    iconBgDark: 'bg-purple-900/20 text-purple-400',
-    icon: <Folder className="w-5 h-5" />
-  }
-];
+// --- API Configuration ---
+const API_BASE_URL = 'https://hr-management-system-pmfp.onrender.com/api';
+const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiSFIiLCJzdWIiOiJocm1zLmhyQGdtYWlsLmNvbSIsImlhdCI6MTc1MzE4ODkxNywiZXhwIjoxNzU2MjEyOTE3fQ.7yScLczcXGmzUeR8wRLd8gyZylZuiiNGIcniPvOKO0g';
+
 
 export default function DashboardCards() {
   const { t, i18n } = useTranslation();
@@ -69,6 +32,95 @@ export default function DashboardCards() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [ready, setReady] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [metrics, setMetrics] = useState<MetricCard[]>([
+    {
+      titleKey: 'dashboard.totalEmployee',
+      value: '...', // Placeholder for loading
+      change: '12%',
+      isPositive: true,
+      dateKey: 'dashboard.updateDate',
+      iconBg: 'bg-blue-50 text-blue-600',
+      iconBgDark: 'bg-blue-900/20 text-blue-400',
+      icon: <Users className="w-5 h-5" />
+    },
+    {
+      titleKey: 'dashboard.totalApplicant',
+      value: '30', 
+      change: '5%',
+      isPositive: true,
+      dateKey: 'dashboard.updateDate',
+      iconBg: 'bg-green-50 text-green-600',
+      iconBgDark: 'bg-green-900/20 text-green-400',
+      icon: <ClipboardList className="w-5 h-5" />
+    },
+    {
+      titleKey: 'dashboard.todayAttendance',
+      value: '20', 
+      change: '8%',
+      isPositive: false,
+      dateKey: 'dashboard.updateDate',
+      iconBg: 'bg-red-50 text-red-600',
+      iconBgDark: 'bg-red-900/20 text-red-400',
+      icon: <BarChart2 className="w-5 h-5" />
+    },
+    {
+      titleKey: 'dashboard.totalProjects',
+      value: '12', 
+      change: '12%',
+      isPositive: true,
+      dateKey: 'dashboard.updateDate',
+      iconBg: 'bg-purple-50 text-purple-600',
+      iconBgDark: 'bg-purple-900/20 text-purple-400',
+      icon: <Folder className="w-5 h-5" />
+    }
+  ]);
+
+  useEffect(() => {
+    const fetchTotalEmployees = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/employees/count/total`, {
+          headers: {
+            'accept': '*/*',
+            'Authorization': `Bearer ${AUTH_TOKEN}`,
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setMetrics(prevMetrics =>
+          prevMetrics.map(metric =>
+            metric.titleKey === 'dashboard.totalEmployee'
+              ? { ...metric, value: data.totalEmployees.toString() }
+              : metric
+          )
+        );
+      } catch (error) {
+        console.error("Failed to fetch total employees:", error);
+        // Optionally set an error state for this metric
+        setMetrics(prevMetrics =>
+          prevMetrics.map(metric =>
+            metric.titleKey === 'dashboard.totalEmployee'
+              ? { ...metric, value: 'Error' }
+              : metric
+          )
+        );
+      }
+    };
+
+    fetchTotalEmployees();
+
+    // NOTE: In a real application, you would also fetch the other metrics here.
+    // For now, they will remain as static values.
+    // fetchTotalApplicants();
+    // fetchTodayAttendance();
+    // fetchTotalProjects();
+
+  }, []);
+
 
   useEffect(() => {
     const checkTheme = () => {
@@ -92,7 +144,6 @@ export default function DashboardCards() {
     }
     window.addEventListener('storage', handleStorageChange)
 
-    // Wait for i18n to be initialized before rendering
     if (i18n.isInitialized) {
       setReady(true)
     } else {
@@ -101,7 +152,6 @@ export default function DashboardCards() {
       return () => i18n.off('initialized', onInit)
     }
 
-    // Update date every minute
     const timer = setInterval(() => setCurrentDate(new Date()), 60000);
 
     return () => {
@@ -111,16 +161,16 @@ export default function DashboardCards() {
     }
   }, [i18n])
 
-  if (!ready) return null // or a loader
+  if (!ready) return null
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl">
       {metrics.map((metric, index) => (
-        <div 
-          key={index} 
+        <div
+          key={index}
           className={`p-6 rounded-2xl shadow-sm border transition-colors duration-200 ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-100'
           }`}
         >
@@ -145,11 +195,11 @@ export default function DashboardCards() {
             </div>
             <div className={`flex items-center text-sm font-medium px-3 py-1 rounded-full transition-colors duration-200 ${
               metric.isPositive
-                ? isDarkMode 
-                  ? 'bg-green-900/20 text-green-400' 
+                ? isDarkMode
+                  ? 'bg-green-900/20 text-green-400'
                   : 'bg-green-100 text-green-600'
-                : isDarkMode 
-                  ? 'bg-red-900/20 text-red-400' 
+                : isDarkMode
+                  ? 'bg-red-900/20 text-red-400'
                   : 'bg-red-100 text-red-600'
             }`}>
               <span className="mr-1">

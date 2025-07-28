@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+// FIX: 'useEffect' is no longer needed, so it has been removed from the import.
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 type ProfessionalFormData = {
@@ -28,20 +29,19 @@ export default function ProfessionalForm({
   formData,
   handleChange,
   employeeTypes,
-  departments,
   officeLocations,
   onCancel,
   onNext,
 }: Props) {
-  const { t, i18n } = useTranslation();
+  // FIX: 'i18n' was not being used, so it has been removed from the destructuring.
+  const { t } = useTranslation();
 
-  // Debug locale and translation changes
-  useEffect(() => {
-    console.log('Current locale:', i18n.language);
-    console.log('Designation translation:', t('attendanceTable.designation')); // Debug designation
-    console.log('Cancel translation:', t('addEmployee.buttons.cancel'));
-    console.log('Next translation:', t('addEmployee.buttons.next'));
-  }, [i18n.language, t]);
+  const departmentOptions = [
+    'Design Department',
+    'Sales Department',
+    'Project Manager Department',
+    'Marketing Department'
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +84,7 @@ export default function ProfessionalForm({
           className={selectClass}
           required
         >
-          <option value="">{t('selectEmployeeType', { defaultValue: 'Select Employee Type' })}</option>
+          <option value="">{t('employmentType', { defaultValue: 'Employment Type' })}</option>
           {employeeTypes.map((type) => (
             <option key={type} value={type.toLowerCase()}>
               {t(`type.${type}`, { defaultValue: type })}
@@ -110,9 +110,9 @@ export default function ProfessionalForm({
           required
         >
           <option value="">{t('selectDepartment', { defaultValue: 'Select Department' })}</option>
-          {departments.map((dept) => (
-            <option key={dept} value={dept.toLowerCase()}>
-              {t(`employees.departments.${dept}`, { defaultValue: dept })}
+          {departmentOptions.map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
             </option>
           ))}
         </select>
