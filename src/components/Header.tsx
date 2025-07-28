@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, LogOut, ChevronDown, Menu } from 'lucide-react'; 
 import { useTranslation } from 'react-i18next';
-// FIX: The useAuth context is no longer needed for displaying user info, so it's removed.
-// import { useAuth } from '@/components/AuthContext';
+
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -20,13 +19,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
   const [searchQuery, setSearchQuery] = useState('');
 
-  // FIX: Create state to hold the user's name and role.
-  // We initialize them with default values.
+ 
   const [userName, setUserName] = useState('User');
   const [userRole, setUserRole] = useState('Guest');
 
-  // FIX: This useEffect hook runs only on the client-side after the component mounts.
-  // This is the correct place to safely access localStorage.
+  
   useEffect(() => {
     const storedUserName = localStorage.getItem('userName');
     const storedUserRole = localStorage.getItem('userRole');
@@ -37,7 +34,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     if (storedUserRole) {
       setUserRole(storedUserRole);
     }
-  }, []); // The empty array ensures this runs only once on mount.
+  }, []); 
 
 
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -50,7 +47,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const currentPath = pathname.split('/')[1] || 'dashboard';
     switch (currentPath) {
       case 'employees': return t('pageTitles.employees', 'All Employees');
-      case 'department': return t('pageTitles.department', 'All Departments');
+      case 'departments': return t('pageTitles.departments', 'All Departments');
       case 'attendance': return t('pageTitles.attendance', 'Attendance');
       case 'payroll': return t('pageTitles.payroll', 'Payroll');
       case 'jobs': return t('pageTitles.jobs', 'Jobs');
@@ -70,14 +67,14 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     return t('header.goodEvening', 'Good Evening');
   };
 
-  // FIX: The logout function now clears all relevant items from localStorage.
+ 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
     localStorage.removeItem('employeeId');
-    router.push('/'); // Redirect to the main login page
+    router.push('/'); 
   };
 
   useEffect(() => {
@@ -97,7 +94,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
       <header className="relative z-30 flex justify-between items-center gap-4 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         
-        {/* Left Side: Hamburger Menu (mobile) + Title */}
+       
         <div className="flex items-center gap-3">
           <button 
             onClick={onMenuToggle} 
@@ -107,12 +104,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             <Menu className="w-6 h-6" />
           </button>
 
-          {/* Page Title / Greeting */}
+         
           <div>
             {pathname.startsWith('/dashboard') ? (
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-                  {/* FIX: This now uses the userName from our state */}
+                 
                   {t('header.helloUser', { name: userName, defaultValue: `Hello, ${userName}` })} 👋
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{getGreeting()}</p>
@@ -130,7 +127,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right Side: Search and Profile Dropdown */}
+       
         <div className="flex items-center gap-2 md:gap-4">
           <div className="relative w-full max-w-xs md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -150,7 +147,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 {userInitials.toUpperCase()}
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                {/* FIX: These now use the state variables that read from localStorage */}
+               
                 <span className="text-sm font-medium text-gray-900 dark:text-white">{userName}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">{userRole}</span>
               </div>
