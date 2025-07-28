@@ -1,10 +1,11 @@
-// This is the main Employee type used throughout your application at runtime.
+
 export type Employee = {
-  id: string; // Use string for IDs like 'EMP-123'
+  id: string; 
   profileImage: string | null;
   status: 'active' | 'inactive';
 
   personalInfo: {
+    profileImage: string | null; 
     firstName: string;
     lastName: string;
     mobileNumber: string;
@@ -33,7 +34,7 @@ export type Employee = {
   documents: {
     title: string;
     fileName: string;
-    dataUrl: string; // The Base64 string for the file
+    dataUrl: string; 
   }[];
 
   accountAccess: {
@@ -43,17 +44,17 @@ export type Employee = {
   };
 };
 
-// This is the type for the data collected in the PersonalForm
+
 export type PersonalFormData = Employee['personalInfo'];
 
-// This is the type for the data collected in the ProfessionalForm
+
 export type ProfessionalFormData = Omit<Employee['professionalInfo'], 'userName' | 'emailAddress'> & {
     employeeID: string;
     userName: string;
     emailAddress: string;
 };
 
-// This is the type for a single document object used in the upload process
+
 export type Document = {
   title: string;
   file: {
