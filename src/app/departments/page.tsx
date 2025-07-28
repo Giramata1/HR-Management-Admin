@@ -42,8 +42,20 @@ function DepartmentsPage() {
       if (typeof window !== 'undefined') {
 
         const storedEmployees = localStorage.getItem('employees');
+        let employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
+
         
-        const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
+        employees = employees.map(emp => ({
+          ...emp,
+          personalInfo: {
+    
+            ...emp.personalInfo,
+          },
+          professionalInfo: {
+            ...emp.professionalInfo,
+          },
+        }));
+       
 
         const storedDepartments = localStorage.getItem('departments');
         const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
@@ -233,8 +245,7 @@ function DepartmentsPage() {
                   <div key={idx} className="flex justify-between items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                     <div className="flex items-center gap-3">
                     
-                     
-                      {employee.personalInfo.profileImage? (
+                      {employee.personalInfo.profileImage ? (
                         <Image
                           src={employee.personalInfo.profileImage}
                           alt={`Profile of ${employee.personalInfo.firstName}`}
@@ -247,7 +258,6 @@ function DepartmentsPage() {
                           {getInitials(employee.personalInfo.firstName + ' ' + employee.personalInfo.lastName)}
                         </div>
                       )}
-                     
 
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{employee.personalInfo.firstName} {employee.personalInfo.lastName}</p>
