@@ -184,7 +184,7 @@ const DepartmentDetail = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   
-
+  
   const [employeeToView, setEmployeeToView] = useState<DepartmentEmployee | null>(null);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<DepartmentEmployee | null>(null);
@@ -207,7 +207,7 @@ const DepartmentDetail = () => {
 
   const handleSaveNewEmployee = async (formData: EmployeeFormData) => {
     try {
-      
+     
       const newEmployee: Employee = {
         id: Date.now().toString(),
         personalInfo: {
