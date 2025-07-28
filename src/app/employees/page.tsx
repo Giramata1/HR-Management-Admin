@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Eye, Edit2, Trash2, Filter, Loader2, CheckCircle2 } from 'lucide-react';
+
+import { Search, Plus, Eye, Edit2, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { Employee } from '@/types/employee';
 
-// --- FAKE API ---
+
 const fakeApi = {
   getEmployees: async (): Promise<Employee[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -32,14 +33,14 @@ const fakeApi = {
   }
 };
 
-// --- Employee Avatar Component ---
+
 const EmployeeAvatar = ({ src, name }: { src: string | null; name: string }) => {
     const [imgSrc, setImgSrc] = useState(src || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`);
     useEffect(() => { setImgSrc(src || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`) }, [src, name]);
     return (<Image src={imgSrc} alt={name} width={36} height={36} className="w-9 h-9 rounded-full object-cover" onError={() => setImgSrc(`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`)} />);
 };
 
-// --- Success Modal Component ---
+
 const SuccessModal = ({ onClose, message }: { onClose: () => void; message: string; }) => (
   <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center max-w-sm w-full">
@@ -51,23 +52,19 @@ const SuccessModal = ({ onClose, message }: { onClose: () => void; message: stri
   </div>
 );
 
-// --- Edit Modal Component ---
+
 const EditEmployeeModal = ({ employee, onSave, onCancel }: { employee: Employee; onSave: (updatedData: Employee) => void; onCancel: () => void; }) => {
     const [formData, setFormData] = useState<Employee>(employee);
 
-    // FIX: This function is rewritten to be fully type-safe and resolve the TypeScript error.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         const [section, key] = name.split('.');
 
         if (section === 'personalInfo' || section === 'professionalInfo' || section === 'accountAccess') {
             setFormData(prev => {
-                // Ensure the section exists on the previous state
-                const currentSection = prev[section];
+                const currentSection = prev[section as keyof Employee];
                 if (typeof currentSection === 'object' && currentSection !== null) {
-                    // Create a new object for the updated section
                     const updatedSection = { ...currentSection, [key]: value };
-                    // Return the new state object
                     return { ...prev, [section]: updatedSection };
                 }
                 return prev;
@@ -113,7 +110,7 @@ const EditEmployeeModal = ({ employee, onSave, onCancel }: { employee: Employee;
 };
 
 
-// --- Main Page Component ---
+
 export default function EmployeeTablePage() {
   const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -143,7 +140,7 @@ export default function EmployeeTablePage() {
     );
   }, [employees, searchQuery]);
 
-  // --- Handlers ---
+  
   const handleSaveEdit = async (updatedEmployee: Employee) => {
     try {
         await fakeApi.updateEmployee(updatedEmployee);
@@ -179,7 +176,7 @@ export default function EmployeeTablePage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1-2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search by name, ID, or department..."
@@ -192,9 +189,7 @@ export default function EmployeeTablePage() {
             <button onClick={() => router.push('/employees/add')} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm hover:bg-purple-700 transition-colors">
               <Plus className="w-5 h-5"/> Add New Employee
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <Filter className="w-5 h-5"/> Filter
-            </button>
+           
           </div>
         </div>
 
