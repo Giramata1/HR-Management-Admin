@@ -24,7 +24,7 @@ const getInitials = (name: string) => {
 };
 
 
-
+// --- Main Page Component ---
 export default function DepartmentsPage() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,47 +35,46 @@ export default function DepartmentsPage() {
   const [updatedDepartmentName, setUpdatedDepartmentName] = useState('');
   const [departmentsData, setDepartmentsData] = useState<DepartmentsData>({});
   const [loading, setLoading] = useState(true);
-  const [hydrated, setHydrated] = useState(false); 
 
+  // FIX: Add a state to track when the component has mounted on the client
+  const [hydrated, setHydrated] = useState(false);
+
+  // FIX: This effect runs only on the client, setting hydrated to true
   useEffect(() => {
-    
     setHydrated(true);
   }, []);
 
-
   const fetchAndProcessData = useCallback(() => {
     setLoading(true);
+    // No need to check for `typeof window` here, since this function
+    // will only be called after the component is hydrated.
     try {
-      
-      if (typeof window !== 'undefined') {
+      const storedEmployees = localStorage.getItem('employees');
+      const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
 
-        const storedEmployees = localStorage.getItem('employees');
-        const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
+      const storedDepartments = localStorage.getItem('departments');
+      const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
 
-        const storedDepartments = localStorage.getItem('departments');
-        const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
-
-        const groupedByDept = employees.reduce((acc, emp) => {
-          const dept = emp.professionalInfo.department;
-          if (dept) {
-            const slug = dept.toLowerCase().replace(/\s+/g, '-');
-            if (!acc[slug]) {
-              acc[slug] = { name: dept, employees: [] };
-            }
-            acc[slug].employees.push(emp);
+      const groupedByDept = employees.reduce((acc, emp) => {
+        const dept = emp.professionalInfo.department;
+        if (dept) {
+          const slug = dept.toLowerCase().replace(/\s+/g, '-');
+          if (!acc[slug]) {
+            acc[slug] = { name: dept, employees: [] };
           }
-          return acc;
-        }, {} as DepartmentsData);
+          acc[slug].employees.push(emp);
+        }
+        return acc;
+      }, {} as DepartmentsData);
 
-        departmentNames.forEach(deptName => {
-            const slug = deptName.toLowerCase().replace(/\s+/g, '-');
-            if (!groupedByDept[slug]) {
-                groupedByDept[slug] = { name: deptName, employees: [] };
-            }
-        });
+      departmentNames.forEach(deptName => {
+          const slug = deptName.toLowerCase().replace(/\s+/g, '-');
+          if (!groupedByDept[slug]) {
+              groupedByDept[slug] = { name: deptName, employees: [] };
+          }
+      });
 
-        setDepartmentsData(groupedByDept);
-      }
+      setDepartmentsData(groupedByDept);
     } catch (error) {
       console.error("Failed to process department data:", error);
     } finally {
@@ -83,14 +82,15 @@ export default function DepartmentsPage() {
     }
   }, []);
 
+  // FIX: This effect now depends on `hydrated`.
+  // It will only run `fetchAndProcessData` after `hydrated` becomes true.
   useEffect(() => {
-    
     if (hydrated) {
       fetchAndProcessData();
     }
   }, [hydrated, fetchAndProcessData]);
 
- 
+  // --- Handlers remain the same, but will now work correctly ---
 
   const handleAddDepartment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +108,7 @@ export default function DepartmentsPage() {
 
       setNewDepartmentName('');
       setShowAddModal(false);
-      fetchAndProcessData();
+      fetchAndProcessData(); // Refresh the entire view
     }
   };
 
@@ -116,7 +116,7 @@ export default function DepartmentsPage() {
     setShowUpdateModal(department);
     setUpdatedDepartmentName(department.name);
   };
-
+  
   const handleUpdateDepartment = (e: React.FormEvent) => {
     e.preventDefault();
     if (showUpdateModal && updatedDepartmentName.trim()) {
@@ -165,7 +165,7 @@ export default function DepartmentsPage() {
     if (showDeleteConfirm) {
       const storedDepartments = localStorage.getItem('departments');
       let departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
-
+      
       departmentNames = departmentNames.filter(d => d.toLowerCase() !== showDeleteConfirm.name.toLowerCase());
       localStorage.setItem('departments', JSON.stringify(departmentNames));
 
@@ -179,12 +179,15 @@ export default function DepartmentsPage() {
     dept.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // FIX: Do not render the main component until it has been hydrated.
+  // This ensures there is no mismatch between server and client.
   if (!hydrated) {
-  
+    // You can return a loading spinner here for a better user experience
     return <div className="text-center py-10">Loading...</div>;
   }
 
   return (
+    // The rest of your JSX remains the same
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 sm:px-8 py-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
@@ -264,7 +267,8 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      {/* Add Department Modal */}
+      {/* MODALS */}
+      {/* Your modals will work fine here because they are only shown based on state, which is handled correctly after hydration. */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -290,7 +294,6 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      {/* Update Department Modal */}
       {showUpdateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -315,13 +318,12 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Confirm Deletion</h2>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Are you sure you want to delete the department &quot;{showDeleteConfirm.name}&quot;? This action cannot be undone.
+                Are you sure you want to delete the department "{showDeleteConfirm.name}"? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4 mt-6">
                 <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-md border">Cancel</button>
