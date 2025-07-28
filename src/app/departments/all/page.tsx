@@ -5,9 +5,9 @@ import { useParams} from 'next/navigation';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { Search, Eye, Edit, Trash2, Plus, CheckCircle2 } from 'lucide-react';
-import { Employee } from '@/types/employee'; // Ensure this path is correct
+import { Employee } from '@/types/employee'; 
 
-// --- FAKE API (with update and delete) ---
+
 const fakeApi = {
   getEmployees: async (): Promise<Employee[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -40,7 +40,7 @@ const fakeApi = {
   }
 };
 
-// --- Helper Components ---
+
 const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />;
 const Button = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{props.children}</button>;
 const EmployeeAvatar = ({ src, name }: { src: string | null; name: string }) => {
@@ -49,7 +49,7 @@ const EmployeeAvatar = ({ src, name }: { src: string | null; name: string }) => 
     return (<Image src={imgSrc} alt={name} width={40} height={40} className="rounded-full h-10 w-10 object-cover" onError={() => setImgSrc(`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`)} />);
 };
 
-// --- Success Modal Component ---
+
 const SuccessModal = ({ onClose, message }: { onClose: () => void; message: string; }) => (
   <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center max-w-sm w-full">
@@ -61,7 +61,7 @@ const SuccessModal = ({ onClose, message }: { onClose: () => void; message: stri
   </div>
 );
 
-// --- Add Employee Modal Component ---
+
 interface EmployeeFormData { firstName: string; lastName: string; email: string; designation: string; employeeType: string; }
 const AddEmployeeModal = ({ isOpen, onClose, onSave, departmentName }: { isOpen: boolean; onClose: () => void; onSave: (formData: EmployeeFormData) => void; departmentName: string; }) => {
     const [formData, setFormData] = useState<EmployeeFormData>({ firstName: '', lastName: '', email: '', designation: '', employeeType: 'Full-Time' });
@@ -86,7 +86,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSave, departmentName }: { isOpen:
     );
 };
 
-// --- FIX: New View Employee Modal Component ---
+
 const ViewEmployeeModal = ({ employee, isOpen, onClose }: { employee: DepartmentEmployee | null; isOpen: boolean; onClose: () => void; }) => {
     if (!isOpen || !employee) return null;
     return (
@@ -109,7 +109,7 @@ const ViewEmployeeModal = ({ employee, isOpen, onClose }: { employee: Department
 };
 
 
-// --- FIX: Expanded Edit Employee Modal Component ---
+
 const EditEmployeeModal = ({ employee, isOpen, onClose, onSave }: { employee: Employee | null; isOpen: boolean; onClose: () => void; onSave: (updatedEmployee: Employee) => void; }) => {
     const [formData, setFormData] = useState<Employee | null>(employee);
 
@@ -184,7 +184,7 @@ const DepartmentDetail = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   
-  // FIX: State for the new modals
+
   const [employeeToView, setEmployeeToView] = useState<DepartmentEmployee | null>(null);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<DepartmentEmployee | null>(null);
@@ -207,7 +207,7 @@ const DepartmentDetail = () => {
 
   const handleSaveNewEmployee = async (formData: EmployeeFormData) => {
     try {
-      // Create a new Employee object based on formData and departmentName
+      
       const newEmployee: Employee = {
         id: Date.now().toString(),
         personalInfo: {
@@ -322,7 +322,7 @@ const DepartmentDetail = () => {
         </div>
       </div>
 
-      {/* Render Modals */}
+     
       <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={handleSaveNewEmployee} departmentName={departmentName} />
       {showSuccessModal && <SuccessModal message={modalMessage} onClose={() => setShowSuccessModal(false)} />}
       <ViewEmployeeModal employee={employeeToView} isOpen={!!employeeToView} onClose={() => setEmployeeToView(null)} />
