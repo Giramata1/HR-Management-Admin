@@ -1,13 +1,12 @@
 'use client';
-
-
 import dynamic from 'next/dynamic';
+import Image from 'next/image'; 
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, ChevronRight, Plus, Trash2, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Employee } from '@/types/employee';
+import { Employee } from '@/types/employee'; 
 
 interface Department {
   name: string;
@@ -43,6 +42,7 @@ function DepartmentsPage() {
       if (typeof window !== 'undefined') {
 
         const storedEmployees = localStorage.getItem('employees');
+        
         const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
 
         const storedDepartments = localStorage.getItem('departments');
@@ -170,7 +170,7 @@ function DepartmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 sm:px-8 py-6">
-  
+     
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('allDepartments.title')}</h1>
@@ -232,9 +232,23 @@ function DepartmentsPage() {
                 {dept.employees.slice(0, 5).map((employee, idx) => (
                   <div key={idx} className="flex justify-between items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-gray-200 dark:bg-gray-600 h-10 w-10 flex items-center justify-center text-sm font-medium text-gray-700 dark:text-white">
-                        {getInitials(employee.personalInfo.firstName + ' ' + employee.personalInfo.lastName)}
-                      </div>
+                    
+                     
+                      {employee.personalInfo.profileImage? (
+                        <Image
+                          src={employee.personalInfo.profileImage}
+                          alt={`Profile of ${employee.personalInfo.firstName}`}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover h-10 w-10"
+                        />
+                      ) : (
+                        <div className="rounded-full bg-gray-200 dark:bg-gray-600 h-10 w-10 flex items-center justify-center text-sm font-medium text-gray-700 dark:text-white">
+                          {getInitials(employee.personalInfo.firstName + ' ' + employee.personalInfo.lastName)}
+                        </div>
+                      )}
+                     
+
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{employee.personalInfo.firstName} {employee.personalInfo.lastName}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{employee.professionalInfo.designation}</p>
