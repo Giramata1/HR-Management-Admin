@@ -323,7 +323,7 @@ export default function DepartmentsPage() {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Confirm Deletion</h2>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Are you sure you want to delete the department "{showDeleteConfirm.name}"? This action cannot be undone.
+                Are you sure you want to delete the department &quot;{showDeleteConfirm.name}&quot;? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4 mt-6">
                 <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-md border">Cancel</button>
