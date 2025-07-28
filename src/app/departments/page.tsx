@@ -1,11 +1,13 @@
 'use client';
 
+
+import dynamic from 'next/dynamic';
+
 import { useState, useEffect, useCallback } from 'react';
 import { Search, ChevronRight, Plus, Trash2, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Employee } from '@/types/employee';
-
 
 interface Department {
   name: string;
@@ -24,8 +26,7 @@ const getInitials = (name: string) => {
 };
 
 
-// --- Main Page Component ---
-export default function DepartmentsPage() {
+function DepartmentsPage() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,45 +37,38 @@ export default function DepartmentsPage() {
   const [departmentsData, setDepartmentsData] = useState<DepartmentsData>({});
   const [loading, setLoading] = useState(true);
 
-  // FIX: Add a state to track when the component has mounted on the client
-  const [hydrated, setHydrated] = useState(false);
-
-  // FIX: This effect runs only on the client, setting hydrated to true
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
   const fetchAndProcessData = useCallback(() => {
     setLoading(true);
-    // No need to check for `typeof window` here, since this function
-    // will only be called after the component is hydrated.
     try {
-      const storedEmployees = localStorage.getItem('employees');
-      const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
+      if (typeof window !== 'undefined') {
 
-      const storedDepartments = localStorage.getItem('departments');
-      const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
+        const storedEmployees = localStorage.getItem('employees');
+        const employees: Employee[] = storedEmployees ? JSON.parse(storedEmployees) : [];
 
-      const groupedByDept = employees.reduce((acc, emp) => {
-        const dept = emp.professionalInfo.department;
-        if (dept) {
-          const slug = dept.toLowerCase().replace(/\s+/g, '-');
-          if (!acc[slug]) {
-            acc[slug] = { name: dept, employees: [] };
+        const storedDepartments = localStorage.getItem('departments');
+        const departmentNames: string[] = storedDepartments ? JSON.parse(storedDepartments) : [];
+
+        const groupedByDept = employees.reduce((acc, emp) => {
+          const dept = emp.professionalInfo.department;
+          if (dept) {
+            const slug = dept.toLowerCase().replace(/\s+/g, '-');
+            if (!acc[slug]) {
+              acc[slug] = { name: dept, employees: [] };
+            }
+            acc[slug].employees.push(emp);
           }
-          acc[slug].employees.push(emp);
-        }
-        return acc;
-      }, {} as DepartmentsData);
+          return acc;
+        }, {} as DepartmentsData);
 
-      departmentNames.forEach(deptName => {
-          const slug = deptName.toLowerCase().replace(/\s+/g, '-');
-          if (!groupedByDept[slug]) {
-              groupedByDept[slug] = { name: deptName, employees: [] };
-          }
-      });
+        departmentNames.forEach(deptName => {
+            const slug = deptName.toLowerCase().replace(/\s+/g, '-');
+            if (!groupedByDept[slug]) {
+                groupedByDept[slug] = { name: deptName, employees: [] };
+            }
+        });
 
-      setDepartmentsData(groupedByDept);
+        setDepartmentsData(groupedByDept);
+      }
     } catch (error) {
       console.error("Failed to process department data:", error);
     } finally {
@@ -82,16 +76,11 @@ export default function DepartmentsPage() {
     }
   }, []);
 
-  // FIX: This effect now depends on `hydrated`.
-  // It will only run `fetchAndProcessData` after `hydrated` becomes true.
   useEffect(() => {
-    if (hydrated) {
-      fetchAndProcessData();
-    }
-  }, [hydrated, fetchAndProcessData]);
+    fetchAndProcessData();
+  }, [fetchAndProcessData]);
 
-  // --- Handlers remain the same, but will now work correctly ---
-
+ 
   const handleAddDepartment = (e: React.FormEvent) => {
     e.preventDefault();
     if (newDepartmentName.trim()) {
@@ -108,7 +97,7 @@ export default function DepartmentsPage() {
 
       setNewDepartmentName('');
       setShowAddModal(false);
-      fetchAndProcessData(); // Refresh the entire view
+      fetchAndProcessData();
     }
   };
 
@@ -179,16 +168,9 @@ export default function DepartmentsPage() {
     dept.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // FIX: Do not render the main component until it has been hydrated.
-  // This ensures there is no mismatch between server and client.
-  if (!hydrated) {
-    // You can return a loading spinner here for a better user experience
-    return <div className="text-center py-10">Loading...</div>;
-  }
-
   return (
-    // The rest of your JSX remains the same
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 sm:px-8 py-6">
+  
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('allDepartments.title')}</h1>
@@ -267,8 +249,7 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      {/* MODALS */}
-      {/* Your modals will work fine here because they are only shown based on state, which is handled correctly after hydration. */}
+      
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -335,3 +316,7 @@ export default function DepartmentsPage() {
     </div>
   )
 }
+
+
+
+export default dynamic(() => Promise.resolve(DepartmentsPage), { ssr: false });
